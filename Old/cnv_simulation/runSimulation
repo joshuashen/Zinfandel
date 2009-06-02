@@ -1,0 +1,1 @@
+/nfs/home5/mozes/jdk1.6.0/bin/java -Xmx1500m -classpath /nfs/home5/mozes cnv_simulation.Simulation params /nfs/home5/mozes/cnv_simulation/segments

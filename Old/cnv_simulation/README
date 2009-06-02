@@ -1,0 +1,195 @@
+		Instructions for using the shotgun sequencing simulator
+				Eyal Mozes
+
+This directory contains command files for using a simulation program
+that simulates copy-number variations and shotgun sequencing over the
+human genome (downloaded from http://hgdownload.cse.ucsc.edu), and
+results from a sample run of this program. To use the program, copy
+files runSimulation and params to your own directory, and edit params
+to make any desired changes to the parameters.
+
+To run the simulation program, use command
+
+	runSimulation
+
+The program reads file params to get its parameters; performs a number of
+random copy-number variations in the reference genome; and then simulates
+shotgun-sequencing reads. The program outputs are the results of the
+simulated reads, and a list of the simulated copy-number variations.
+
+After running the simulation, the results can be used as input to
+Maq to check how the simulated reads would be mapped to the reference
+genome. Command-file runMaq contains an example of the commands for
+running the mapping. The human-readable outputs of th Maqe mapping run in this
+example are
+
+	- results.map.txt, the output of maq mapview, listing the mappings
+	of all reads in text format
+	- pileup.output, a condensed form of the output of maq pileup,
+	showing the coverage at each location on the genome
+	- runmaq.log, the log output of the maq map runs
+
+The file "params" parameters for creating variations, shotgun sequencing,
+incorporating SNPs, and for the output format. Parameters are as follows:
+
+	Chromosome ID1 ID2 ....
+
+If this line is included in the params file, the program does not run
+over the entire reference genome, but only over the chromosomes listed
+in this line. The line should contain one or more chromosome ids (a
+chromosome id is X, Y, or a number between 1 and 22), and the simulated
+variations and reads are done only over the listed chromosomes. The
+default is to run the simulation over the entire genome.
+
+Creating variations
+
+The simulator allows two methods of creating variation; random creation,
+or choosing from a list of common variations. The example in this
+directory is of a run in which a list of common variations was used.
+
+To use a list of common variations, the params file should contain
+the line
+
+	commonVariations N file1 file2 ...
+
+The line provides a list of files containing a list of common variations;
+the simulator will choose a total of N variations at random from all these
+fils. If a list of chromosomes was specified, only variations in these
+chromosomes can be chosen. A variation of type "InDel" or "CopyNumber" is
+treated as either a duplication or a deletion with equal probability. If
+a variation in the same location happens to be chosen more than once,
+the variation in that location is made homozygous.
+
+Alternatively, to create variations randonly, use one or more of the
+following lines:
+
+	duplications N1
+
+	deletions N2
+
+	inversions N3
+
+The simulator then the specified number of each type of variation. Any
+types that are not specified are not created (e.g. if only the "deletions"
+line is specified, the simulator will create deletions only). If none of
+these four lines are specified ("duplications", "deletions", "inversions"
+or "commonVariations") the simulator simulates shotgun sequencing of
+the reference genome, with no variations.
+
+Randomly created and common variations may be combined; if the
+"commonVariations" line is specified and some or all of "duplications",
+"deletions" and "inversions" are also specified, the simulator will
+choose the specified number of variations from the list and also create
+the specified number of random variations.
+
+When creating variations randomly, the following lines may also be
+specified:
+
+	VariationSizeRange N K
+
+The range of sizes of the randomly created variations. N is the
+minimum variation size (default 50), K is the largest size (default
+1000000). Variation sizes are determined randomly with an exponentially
+decreasing distribution.
+
+	MinimumLargeVariations N
+
+Force at least N variations of each type (i.e. at least N of the
+duplications, N of the deletions and N of the inversions) to be of
+the maximum size. Default is N=0, i.e. have variations of the maximum
+size only if they happen to be created in the exponentially decreasing
+distribution. The minimum applies only to the types being used in this
+run; i.e. if only the "deletions" line is specified, then the minimum
+of large variations applies only to deletions.
+
+	HomozygousPercentage N
+
+Percentage of randomly created variations that should be
+homozygous. Default is 10, i.e. 10% of randomly created variations will
+be homozygous.
+
+SNPs
+
+The simulator can also optionally simulate SNPs. This is done by
+specifying the line
+
+	SNPs file
+
+The file should contains a list of SNPs; the program introduces all SNPs
+in the file (or if a list of chromosomes was specified, all SNPs in the
+file belonging to these chromosomes) into the reference genome before
+performing the variations.
+
+Parameters for simulated shotgun sequencing
+
+The following parameters can be specified to control how the simulated
+shotgun sequencing is performed.
+
+	ReadLength N
+
+Shotgun sequencing read length. Default is 35.
+
+	readBlockDistribution file
+
+A file containing a distribution of read-pair block sizes (inclusive of
+the size of the two reads).
+
+	readBlockSize N
+
+Read blocks are of fixed size N.
+
+Either "ReadBlockSize" or "readBlockDistribution" should be specified, not
+both. If neither is specied, the default is a fixed size of 4000.
+
+	coverage N
+
+Simulate shotgun sequencing with a depth coverage of N. No default,
+i.e. either this line ro "coverage carpet" must be specified.
+
+	coverage carpet
+
+Do carpet coverage of the entire reference genome (or if the "Chromosome" line
+is specified, of all the chromosomes listed in it). Create read blocks starting at
+each possible position. A maq pileup output created from this carpet coverage is
+useful input to the HMM inference program, in order to properly normalize the
+coverage probabilities at each position
+
+	OppositeStrands [yes/no]
+
+If "yes", the simulated reads are done on opposite strands; i.e. in each
+mate pair the F read will be from the reference genome sequence, and
+the R read will be from the opposite strand, i.e. a reverse-complement
+sequence. Default is "no"; the simulated reads are done on one strand,
+and all F and R reads are from the reference genome sequence.
+
+	Quality N
+
+Quality of the shotgun sequencing. In this version of the program,
+varying quality is not implemented; all reads are done with the
+same quality. Default is 20 (i.e. a .01 probability of error on each
+nucleotide).
+
+Output format parameters
+
+The following parameters can be specified to determine the output format:
+
+	OutputFormat format
+
+Format is either fasta (the default) or fastq. Fastq is needed if the
+output is to be given as input to maq
+
+	OutputName S
+
+The output files of the program will be named with string S; the read
+results will be written into files named "S.read.results.n.F" and
+"S.read.results.n.R", and the variations list will be written into a
+file named "S.variations". If this line is omitted, the output files
+will be named "read.results.n.F", "read.results.n.R", and "variations".
+
+	ReadsPerFile N
+
+Number of reads per output file. The reads result output is broken into
+as many files as needed, each containing N reads; this parameter can
+be used to make sure the output files are small enough to be handled by
+Maq. If this line is not specified, the default is to write all the read
+results into one output file.

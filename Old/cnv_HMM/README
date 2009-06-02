@@ -1,0 +1,91 @@
+	Instructions for using the HMM CNV-from-coverage inference program
+				Yufeng Shen and Eyal Mozes
+
+The program accepts as its input a file providing coverage numbers for
+each position on the genome, as a result of mapping shotgun sequencing results
+with Maq. The program can either directly accept the output of "maq pileup",
+or the more compact format produced by class cnv_simulation.convert_pileup (see
+the runMaq command file in the Simulation folder for an example of how to
+produce this file).
+
+The command file runViterbi in this directory contains an example of how to
+run the inference program. The command-line arguments to the inference program
+are:
+
+params=[param-file]	optional file containing parameters for the run. If
+			not specified, defaults are used for all parameters.
+
+pileup=[pileup-file]	mandatory argument specifying the pileup input file
+
+segments=[segment-directory]	optional argument specifying the directory
+				containing the segmented version of the
+				reference genome. Used by the program to
+				identify unsequenced regions of the genome
+				(regions consisting of long strings of N
+				in the reference sequence); mapping to such
+				regions is ignored in the inference.
+
+carpet=[carpet-file1,carpet-file2,...]	optional argument specifying one or
+					more files containing the pileup
+					results from carpet coverage of
+					the reference sequence. Used for
+					background coverage probabilities, used
+					to normalize the results in the pileup
+					input file.
+
+actual=[actual-CNVs]	optional file containing the actual CNVs; if the
+			input was the result of simulated sequencing, then
+			we know the actual CNVs and can provide this file.
+
+If the "actual" argument is not provided, the output of the inference program
+is a list of inferred CNVs; if the "actual" argument is provided, the output
+is a comparison of the inferred CNVs with the actual ones, listing all
+actual CNVs that were undetected, all false positives, and, for those CNVs that
+were correctly detected, the degree of overlap between the actual CNV and the
+inferred one.
+
+The parameters that can be specified in the parameters file are as follows:
+
+		Chromosome ID1 ID2 ....
+
+List of chromosomes for which inference should be performed; input data for
+other chromosomes is ignored. By default, perform inference for all chromosomes
+that appear in the input.
+
+		duplications N
+
+		deletions N
+
+		averageCNVLength N
+
+		homozygousPercentage P
+
+Estimated total number of duplications and deletions in the chromosomes
+for which the inference is performed; estimated length of each CNV; and
+estimated percentage of CNVs that are homozygous. These
+estimates are used in constructing the HMM transition probabilities; the
+estimates need not be completely accurate, but if they are a close estimate
+that will help the program create more accurate transition probabilities and
+therefore better predictions.
+
+Default values are one duplication and one deletion per 15mb; average CNV
+length of 80000; and homozygous percentage of .005%.
+
+		ReadLength N
+
+Read length used in the sequencing that produced the pileup input file. Default
+is 25.
+
+		CarpetReadLength N
+
+If carpet files were specified, read length used in the carpet coverage
+sequencing that produced the carpet files. Default is 25. Note that the best
+results are achieved when the input pileup and the carpet files were all
+produced with the same read length, in which case ReadLength and
+CarpetReadLength will be the same.
+
+		OverlapThreshold P
+
+If the actual CNVs are specified, this is the minimum overlap needed between
+an actual and inferred CNV. An inferred CNV is listed as correct if it has an
+overlap of at least P% with an actual CNV. Default is 60.
