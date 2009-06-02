@@ -1,0 +1,7 @@
+numCNVs 50 
+avgCNVSize 10000
+ReadSize 35
+# Chromosome 18
+genome diploid
+depthCov 0.21
+
