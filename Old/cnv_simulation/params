@@ -1,0 +1,11 @@
+commonVariations 20 indel.hg18.v5.txt variation.hg18.v5.txt
+coverage 3
+ReadLength 35
+readBlockDistribution /ifs/home/c2b2/ip_lab/yshen/insertSize.txt.valid
+SNPs /ifs/home/c2b2/ip_lab/yshen/HuRef.InternalHuRef-NCBI.gff.snp
+ReadsPerFile 2000000
+Quality 20
+Chromosome 18
+OppositeStrands yes
+OutputFormat fastq
+OutputName results

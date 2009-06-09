@@ -1,0 +1,15 @@
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.1.F results.1.F.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.1.R results.1.R.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.2.F results.2.F.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.2.R results.2.R.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.3.F results.3.F.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.3.R results.3.R.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.4.F results.4.F.bfq
+../../maq-0.6.8_i686-linux/maq fastq2bfq results.read.results.4.R results.4.R.bfq
+../../maq-0.6.8_i686-linux/maq map -a 4000 results.1.map ref.bfa results.1.F.bfq results.1.R.bfq
+../../maq-0.6.8_i686-linux/maq map -a 4000 results.2.map ref.bfa results.2.F.bfq results.2.R.bfq
+../../maq-0.6.8_i686-linux/maq map -a 4000 results.3.map ref.bfa results.3.F.bfq results.3.R.bfq
+../../maq-0.6.8_i686-linux/maq map -a 4000 results.4.map ref.bfa results.4.F.bfq results.4.R.bfq
+../../maq-0.6.8_i686-linux/maq mapmerge results.map results.1.map results.2.map results.3.map results.4.map
+../../maq-0.6.8_i686-linux/maq mapview -b results.map > results.map.txt
+../../maq-0.6.8_i686-linux/maq pileup ref.bfa results.map | /nfs/home5/mozes/jdk1.6.0/bin/java -classpath /nfs/home5/mozes/cnv_simulation convert_pileup > pileup.output

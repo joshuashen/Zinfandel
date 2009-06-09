@@ -1,0 +1,1 @@
+java -Xmx1500m -classpath ..:commons-math-1.2.jar cnv_HMM.runViterbi params pileup=read25HMMpileup.output segments=../cnv_simulation/segments carpet=block1000.pileup.output,block3000.pileup.output actual=actual.HMM25
