@@ -1,13 +1,14 @@
-package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
+import java.util.ArrayList;
 
 public class Mapping {
     Hashtable<String, Chromosome> chromosomes;  //HashTable of Chromosome Objects:
+    ArrayList<String> chromosomeNames = new ArrayList<String>();    //Names of each chromosome
                                         //indexed in order of sequence read from reference file
     File mapview;                       //ecoli.map.mapview.random_27k
     File reference;                     //E.coli.K12-MG1655.fasta
@@ -36,6 +37,7 @@ public class Mapping {
            while ((line = in.readLine()) != null){
                if (line.startsWith(">")){   //Start of new Chromosome
                    chromosomes.put(name, new Chromosome(name, seqLength));  //Add Chromosome to HashTable
+                   chromosomeNames.add(name);
                    StringTokenizer st = new StringTokenizer(line.substring(1), " ");
                    name = st.nextToken();
                    seqLength = 0;   //Reset seqLength for next Chromosome
@@ -45,7 +47,7 @@ public class Mapping {
                }
            }
            chromosomes.put(name, new Chromosome(name, seqLength));  //Add Final Chromosome
-           
+           chromosomeNames.add(name);
            System.out.println("Reference Chromosomes Loaded.");
            in.close();
         }
@@ -65,9 +67,7 @@ public class Mapping {
                     String read = st.nextToken();
                     String ref = st.nextToken();
                     int start = Integer.valueOf(st.nextToken());
-                    if (start < 300000){    //Temporary limit to reduce memory usage
-                        chromosomes.get(ref).incrementCoverage(start);
-                    }
+                    chromosomes.get(ref).incrementCoverage(start);
                 }
            System.out.println("MapView File Processed");
            in.close();
