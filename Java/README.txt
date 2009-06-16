@@ -7,7 +7,7 @@ The program requires 3 input files:
 
 Running the program
 After compiling all the .java files, use command in the following format:
-java Main.java -r reference.fasta -m mapview -p parameters
+java Main -r reference.fasta -m mapview -p parameters
 
 The fasta file follows the -r argument, mapview file follows -m argument, and parameters
 file follows the -p argument.
