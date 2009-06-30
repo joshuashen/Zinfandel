@@ -1,3 +1,5 @@
+package cnv_hmm;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -5,7 +7,7 @@ import java.util.ArrayList;
 public class Main {
 
     public static void main(String[] args) {
-
+        
         String usage = "USAGE: java Main -r ref.fa -m mapview -p param";
         
         //Given defaults: will be overidden by args

@@ -1,3 +1,4 @@
+package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -58,6 +59,8 @@ public class Mapping {
 
     public void processMapViewFile(){
         try{
+           int total = 0;
+           int numLarge = 0;
            FileReader reader = new FileReader(mapview);
            BufferedReader in = new BufferedReader(reader);
            System.out.println("Loading MapView File.");
@@ -67,7 +70,20 @@ public class Mapping {
                     String read = st.nextToken();
                     String ref = st.nextToken();
                     int start = Integer.valueOf(st.nextToken());
+                    String direction = st.nextToken();
+                    int distance = Integer.valueOf(st.nextToken());
                     chromosomes.get(ref).incrementCoverage(start);
+                    if (distance > 0){
+                        chromosomes.get(ref).setDistance(start, distance);
+                    }
+                    /*
+                    if (Math.abs(distance) < 1000){
+                        total+=Math.abs(distance);
+                    }
+                    if (Math.abs(distance) > 400){
+                        System.out.println(start + "\t" + distance);
+                    }
+                    */
                 }
            System.out.println("MapView File Processed");
            in.close();
