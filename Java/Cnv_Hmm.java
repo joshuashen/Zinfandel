@@ -1,5 +1,3 @@
-package cnv_hmm;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -30,7 +28,7 @@ public class Cnv_Hmm {
     double chrLength = 3000000000.0;
     int avgDistance;            //Paired distance(estimation)
     int standardDevDistance;    //Standard deviation for paired distance(estimation)
-    int maxDeletionSize = 1000;    //Maximum Deletion Size
+    int maxDeletionSize = 800;    //Maximum Deletion Size
     int numGridStates;
     double factor = 1.5;
     int StatesPerDelSize = 10;
@@ -188,7 +186,7 @@ public class Cnv_Hmm {
                 }
             }
         }
-        System.out.println("breakpoint");
+        System.out.println("Transition Matrix Created");
     }
 
     //Create Emission Matrix
@@ -275,7 +273,7 @@ public class Cnv_Hmm {
                 }
             }
         }
-        System.out.println("breakpoint");
+        System.out.println("Emission Matrix Created");
     }
     
     //log(Poisson(k,lambda)) = klog(lambda) - lambda - SUM(j)_1..k
@@ -318,10 +316,10 @@ public class Cnv_Hmm {
         int numStates = states.size();  //Number of States
         double[] delta;
         if (genome.equalsIgnoreCase("h")){
-            delta = new double[3];
+            delta = new double[numStates];
         }
         else{
-            delta = new double[5];
+            delta = new double[numStates];
         }
         byte[][] prevMap = new byte[chrSize + 1][numStates];    //Holds Optimal Previous state
         //Set Initial Probabilities and prevMap

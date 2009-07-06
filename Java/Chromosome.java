@@ -1,5 +1,3 @@
-package cnv_hmm;
-
 public class Chromosome {
     String name;        //Chromosome Name
     int size;           //Seqence Length of the Chromosome
