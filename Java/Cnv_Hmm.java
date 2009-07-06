@@ -28,8 +28,9 @@ public class Cnv_Hmm {
     double depthCov = 1.0;          //Depth Coverage
     double[] initProb;              //Initial Probabilities for each State
     double chrLength = 3000000000.0;
-    double avgDistance = 170.0;     //Paired Distance
-    int maxDeletionSize = 10000;    //Maximum Deletion Size
+    int avgDistance;            //Paired distance(estimation)
+    int standardDevDistance;    //Standard deviation for paired distance(estimation)
+    int maxDeletionSize = 1000;    //Maximum Deletion Size
     int numGridStates;
     double factor = 1.5;
     int StatesPerDelSize = 10;
@@ -48,7 +49,6 @@ public class Cnv_Hmm {
         }
         numGridStates = count;
     }
-
     //Parameter File Provided
     public Cnv_Hmm(File params){
         int count = 0;
@@ -60,6 +60,30 @@ public class Cnv_Hmm {
             count++;
         }
         numGridStates = count;
+        readParameterFile(params);
+        avgCov = depthCov / readSize;
+    }
+
+    public void initializeHaploidStates(){
+        states.add(0, "normal"); states.add(1, "del1"); states.add(2, "dup1");
+        for (int i = 0; i<numGridStates; i++){
+            for (int j = 0;j<StatesPerDelSize; j++){
+                states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
+            }
+        }
+    }
+
+    public void initializeDiploidStates(){
+        states.add(0, "normal"); states.add(1, "del1"); states.add(2, "del2");
+        states.add(3, "dup1"); states.add(4, "dup2");
+        for (int i = 0; i<numGridStates; i++){
+            for (int j = 0;j<StatesPerDelSize; j++){
+                states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
+            }
+        }
+    }
+
+    public void readParameterFile(File params){
         try{
            FileReader reader = new FileReader(params);
            BufferedReader in = new BufferedReader(reader);
@@ -73,28 +97,16 @@ public class Cnv_Hmm {
                         genome = parameterData;
                         //Haploid
                         if (genome.equalsIgnoreCase("h")){
-                            states.add(0, "normal"); states.add(1, "del1"); states.add(2, "dup1");
-                            for (int i = 0; i<numGridStates; i++){
-                                for (int j = 0;j<StatesPerDelSize; j++){
-                                    states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
-                                }
-                            }
-                            System.out.println("breakpoint");
+                            initializeHaploidStates();
                         }
                         //Diploid
-                        else{             
-                            states.add(0, "normal"); states.add(1, "del1"); states.add(2, "del2");
-                            states.add(3, "dup1"); states.add(4, "dup2");
-                            for (int i = 0; i<numGridStates; i++){
-                                for (int j = 0;j<StatesPerDelSize; j++){
-                                    states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
-                                }
-                            }
+                        else{
+                            initializeDiploidStates();
                         }
                     }
                     //Set other parameters
                     else if (parameterName.equalsIgnoreCase("numCNVs")){
-                        numCNVs = Integer.valueOf(parameterData);                        
+                        numCNVs = Integer.valueOf(parameterData);
                     }
                     else if (parameterName.equalsIgnoreCase("avgCNVSize")){
                         avgCNVSize = Double.valueOf(parameterData);
@@ -105,9 +117,6 @@ public class Cnv_Hmm {
                     else if (parameterName.equalsIgnoreCase("readSize")){
                         readSize = Integer.valueOf(parameterData);
                     }
-                    else if (parameterName.equalsIgnoreCase("avgDistance")){
-                        avgDistance = Double.valueOf(parameterData);
-                    }
                 }
            System.out.println("Parameter File Processed");
            in.close();
@@ -115,7 +124,6 @@ public class Cnv_Hmm {
         catch(IOException e){
            e.printStackTrace();
         }
-        avgCov = depthCov / readSize;
     }
 
     //Creates Transition Matrix and Sets Initial Probabilities for each State
@@ -187,16 +195,18 @@ public class Cnv_Hmm {
     //emission = Pr(depth-coverage | copy-number) * Pr(distance | state)
     //add a uniform component unif:
     //Pr(distance | CNV neutral) = unif + (1-unif) * Norm(distance | CNV-neutral)
-    public void initializeEmissionMatrix(){
+    public void initializeEmissionMatrix(int avg, int dev){
         double lambda = avgCov;
-        double lambda2 = avgDistance;
+        avgDistance = avg;
+        standardDevDistance = dev;
         int numStates = states.size();
         double del1; double del2; double dup1; double dup2;
+        //Diploid Case
         if (genome.equalsIgnoreCase("d")){
             del1 = lambda/2; del2 = lambda/100;
             dup1 = lambda * 1.5; dup2 = lambda * 2.0;
-            emissionCoverageMatrix = new double[numStates][maxEmission+1];
-            emissionDistanceMatrix = new double[numStates][maxDistance+1];
+            emissionCoverageMatrix = new double[numStates][maxEmission];
+            emissionDistanceMatrix = new double[numStates][maxDistance];
             for (int i = 0; i<maxEmission; i++){
                 emissionCoverageMatrix[0][i] = logPoisson(i, lambda);
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
@@ -212,26 +222,29 @@ public class Cnv_Hmm {
             }
             //Set emission distance maxtrix for normal state
             for (int i = 0; i<maxDistance; i++){
-                emissionDistanceMatrix[0][i] = logPoisson(i, lambda2);
+                 emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
+                 emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
+                 emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
             for (int i = 5; i<numStates; i++){
                 for (int j = 0; j<maxDistance; j++){
                     if (states.get(i).contains("-0") || states.get(i).contains("-9")){
                         int index = (i-5)/10;
-                        emissionDistanceMatrix[i][j] = logPoisson(j, DelSizes.get(index) + lambda2);
+                        emissionDistanceMatrix[i][j] = logNormal(j, DelSizes.get(index) + avgDistance, standardDevDistance);
                     }
                     else{
-                        emissionDistanceMatrix[i][j] = logPoisson(j, lambda2);
+                        emissionDistanceMatrix[i][j] = logNormal(j, avgDistance, standardDevDistance);
                     }
                 }
             }
         }
+        //Haploid Case
         else{
             del1 = lambda/100; dup1 = lambda * 2;
             del2 = del1; dup2 = dup1;
             emissionCoverageMatrix = new double[numStates][maxEmission];
-            emissionDistanceMatrix = new double[numStates][maxDistance+1];
+            emissionDistanceMatrix = new double[numStates][maxDistance];
             for (int i = 0; i<maxEmission; i++){
                 emissionCoverageMatrix[0][i] = logPoisson(i, lambda);
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
@@ -243,19 +256,21 @@ public class Cnv_Hmm {
                     emissionCoverageMatrix[i][j] = logPoisson(j, del1);
                 }
             }
-            //Set emission distance maxtrix for normal state
+            //Set emission distance maxtrix for normal state, set to negative infinity for other states
             for (int i = 0; i<maxDistance; i++){
-                emissionDistanceMatrix[0][i] = logPoisson(i, lambda2);
+                emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
+                emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
+                emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
             for (int i = 3; i<numStates; i++){
                 for (int j = 0; j<maxDistance; j++){
                     if (states.get(i).contains("-0") || states.get(i).contains("-9")){
                         int index = (i-3)/10;
-                        emissionDistanceMatrix[i][j] = logPoisson(j, DelSizes.get(index) + lambda2);
+                        emissionDistanceMatrix[i][j] = logNormal(j, DelSizes.get(index) + avgDistance, standardDevDistance);
                     }
                     else{
-                        emissionDistanceMatrix[i][j] = logPoisson(j, lambda2);
+                        emissionDistanceMatrix[i][j] = logNormal(j, avgDistance, standardDevDistance);
                     }
                 }
             }
@@ -271,6 +286,13 @@ public class Cnv_Hmm {
         }
         return p;
     }
+    //log(Normal, k, average, std deviation) = exp^(-(x-avg)^2) / 2*dev^2 - log(dev * sqrt(2pi))
+    public double logNormal(int dis, int avg, int dev){
+        double p = (-1) * (dis - avg) * (dis - avg);
+        p = p/(2 * dev * dev);
+        p -= Math.log(dev * Math.sqrt(2*Math.PI));
+        return p;
+    }
 
     //Accessor for Emission Matrix
     public double Emission(byte state, byte cov, int distance){
@@ -280,7 +302,14 @@ public class Cnv_Hmm {
         if (distance > maxDistance){
             distance = maxDistance;
         }
-        return emissionCoverageMatrix[state][cov] + emissionDistanceMatrix[state][distance];
+        //Read at position
+        if (distance != -1){
+            return emissionCoverageMatrix[state][cov] + emissionDistanceMatrix[state][distance];
+        }
+        //No read at position
+        else{
+            return emissionCoverageMatrix[state][cov];
+        }
     }
 
     //Viterbi Algorithm for Optimal Path    

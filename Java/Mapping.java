@@ -13,12 +13,22 @@ public class Mapping {
                                         //indexed in order of sequence read from reference file
     File mapview;                       //ecoli.map.mapview.random_27k
     File reference;                     //E.coli.K12-MG1655.fasta
+    int averageDistance;                //Average distance
+    int standardDevDistance;            //Standard deviation of distance
 
     //Initialize Files and new Chromosomes ArrayList
     public Mapping(File mv, File ref){
         mapview = mv;
         reference = ref;
         chromosomes = new Hashtable<String, Chromosome>();
+    }
+
+    public int getAverageDistance(){
+        return averageDistance;
+    }
+
+    public int getStandardDeviationDistance(){
+        return standardDevDistance;
     }
 
     //Process Chromosomes from the reference file
@@ -58,33 +68,45 @@ public class Mapping {
     }
 
     public void processMapViewFile(){
-        try{
-           int total = 0;
-           int numLarge = 0;
+        try{                    
            FileReader reader = new FileReader(mapview);
            BufferedReader in = new BufferedReader(reader);
            System.out.println("Loading MapView File.");
            String line;    //stores line
+                int count = 0;      //number of reads counted
+                int total = 0;      //total distance
+                String ref = "";    //reference name;
                 while((line = in.readLine()) != null){
                     StringTokenizer st = new StringTokenizer(line, "\t");
                     String read = st.nextToken();
-                    String ref = st.nextToken();
+                    ref = st.nextToken();
                     int start = Integer.valueOf(st.nextToken());
                     String direction = st.nextToken();
                     int distance = Integer.valueOf(st.nextToken());
                     chromosomes.get(ref).incrementCoverage(start);
-                    if (distance > 0){
+                    if (distance > 0 && distance < 1000){
                         chromosomes.get(ref).setDistance(start, distance);
-                    }
-                    /*
-                    if (Math.abs(distance) < 1000){
                         total+=Math.abs(distance);
+                        count++;
                     }
-                    if (Math.abs(distance) > 400){
-                        System.out.println(start + "\t" + distance);
-                    }
-                    */
                 }
+                
+                double avgDistance = ((double) total)/count;
+                averageDistance = (int) avgDistance;
+                Chromosome c = chromosomes.get(ref);
+                int[] distances = c.distances;
+                long sum = 0;
+                int num = 0;
+                for (int i = 0; i<distances.length; i++){
+                    if (distances[i] != -1){
+                        sum += ((Math.abs(distances[i] - averageDistance)) *
+                               (Math.abs(distances[i] - averageDistance)));
+                        num++;
+                    }
+                }
+                double Dev = Math.sqrt((double) Math.abs(sum)/num);
+                standardDevDistance = (int) Dev;
+
            System.out.println("MapView File Processed");
            in.close();
       }

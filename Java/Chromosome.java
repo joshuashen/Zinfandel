@@ -12,6 +12,11 @@ public class Chromosome {
         size = s;
         coverage = new byte[size];
         distances = new int[size];
+
+        //initialize all distance to -1, signifies no read at this position i if distance[i] remains -1
+        for (int i = 0; i<size; i++){
+            distances[i] = -1;
+        }
     }
 
     //Increments the depth coverage for the base-pair position
