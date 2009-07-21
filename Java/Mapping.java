@@ -1,3 +1,4 @@
+package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -88,6 +89,8 @@ public class Mapping {
                         total+=Math.abs(distance);
                         count++;
                     }
+                    int flag = Integer.valueOf(st.nextToken());
+                    chromosomes.get(ref).setFlag(start, flag);
                 }
                 
                 double avgDistance = ((double) total)/count;

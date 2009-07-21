@@ -1,9 +1,14 @@
+package cnv_hmm;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
+import java.math.BigDecimal;
 
 public class Cnv_Hmm {
     ArrayList<String> states = new ArrayList<String>();    //States for either Diploid or Haploid
@@ -28,10 +33,11 @@ public class Cnv_Hmm {
     double chrLength = 3000000000.0;
     int avgDistance;            //Paired distance(estimation)
     int standardDevDistance;    //Standard deviation for paired distance(estimation)
-    int maxDeletionSize = 800;    //Maximum Deletion Size
+    int maxDeletionSize = 1000;    //Maximum Deletion Size
     int numGridStates;
     double factor = 1.5;
     int StatesPerDelSize = 10;
+    double remainbreakpointProb = 0.1;   
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
 
     //Default Constructor without Parameter File
@@ -63,22 +69,30 @@ public class Cnv_Hmm {
     }
 
     public void initializeHaploidStates(){
+        //Original States
         states.add(0, "normal"); states.add(1, "del1"); states.add(2, "dup1");
+        //Grid States
         for (int i = 0; i<numGridStates; i++){
             for (int j = 0;j<StatesPerDelSize; j++){
                 states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
             }
         }
+        //Breakpoint state
+        states.add("bp");
     }
 
     public void initializeDiploidStates(){
-        states.add(0, "normal"); states.add(1, "del1"); states.add(2, "del2");
-        states.add(3, "dup1"); states.add(4, "dup2");
-        for (int i = 0; i<numGridStates; i++){
+        //Original States
+        states.add(0, "normal"); states.add(1, "del1"); states.add(2, "del2");        
+        states.add(3, "dup1"); states.add(4, "dup2");        
+        //Grid States
+        for (int i = 0; i<numGridStates; i++){            
             for (int j = 0;j<StatesPerDelSize; j++){
                 states.add("delSize" + DelSizes.get(i).toString() + "-" + j);
             }
         }
+        //Breakpoint state
+        states.add("bp");        
     }
 
     public void readParameterFile(File params){
@@ -146,7 +160,10 @@ public class Cnv_Hmm {
                     }
                     else if (states.get(i).equalsIgnoreCase("del1") || states.get(i).equalsIgnoreCase("dup1")){
                         transitionMatrix[i][j] = Math.log(1 - (1.0/avgCNVSize));
-                    }                    
+                    }
+                    else if (states.get(i).equalsIgnoreCase("bp")){
+                        transitionMatrix[i][j] = Math.log(remainbreakpointProb);
+                    }
                     else{
                         int index = (i-3)/10;
                         //Pr(Transition from grid state to itself)
@@ -169,6 +186,21 @@ public class Cnv_Hmm {
                         int index = (i-3)/10;
                         transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/DelSizes.get(index));
                     }
+                    else if(states.get(i).equalsIgnoreCase("bp")){
+                        //Not allowed to transition to grid states
+                        if (states.get(j).contains("-")){
+                            transitionMatrix[i][j] = Double.NEGATIVE_INFINITY;
+                        }
+                        else{
+                            //equal probability of transition to normal/del/dup
+                            if (genome.equalsIgnoreCase("h")){
+                                transitionMatrix[i][j] = (1-remainbreakpointProb)/3.0;
+                            }
+                            else if(genome.equalsIgnoreCase("d")){
+                                transitionMatrix[i][j] = (1-remainbreakpointProb)/5.0;
+                            }
+                        }
+                    }                    
                     else if(states.get(i).contains("-") && states.get(j).contains("-")){
                         String firstState = states.get(i);
                         String secondState = states.get(j);
@@ -211,21 +243,28 @@ public class Cnv_Hmm {
                 emissionCoverageMatrix[2][i] = logPoisson(i, del2);
                 emissionCoverageMatrix[3][i] = logPoisson(i, dup1);
                 emissionCoverageMatrix[4][i] = logPoisson(i, dup2);
+                //Breakpoint State
+                emissionCoverageMatrix[numStates-1][i] = logPoisson(i, lambda);
             }
             //Set all emission coverage values for grid states
-            for (int i = 5; i<numStates; i++){
+            for (int i = 5; i<numStates-1; i++){
                 for (int j = 0; j<maxEmission; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, del1);
                 }
             }
+                        
             //Set emission distance maxtrix for normal state
             for (int i = 0; i<maxDistance; i++){
                  emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
+                 emissionDistanceMatrix[3][i] = logNormal(i, avgDistance, standardDevDistance);
+                 emissionDistanceMatrix[4][i] = logNormal(i, avgDistance, standardDevDistance);
+                 //Breakpoint State
+                 emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
-            for (int i = 5; i<numStates; i++){
+            for (int i = 5; i<numStates-1; i++){
                 for (int j = 0; j<maxDistance; j++){
                     if (states.get(i).contains("-0") || states.get(i).contains("-9")){
                         int index = (i-5)/10;
@@ -247,9 +286,11 @@ public class Cnv_Hmm {
                 emissionCoverageMatrix[0][i] = logPoisson(i, lambda);
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
                 emissionCoverageMatrix[2][i] = logPoisson(i, dup1);
+                //Breakpoint state
+                emissionCoverageMatrix[numStates-1][i] = logPoisson(i, dup1);                
             }
             //Set all emission coverage values for grid states
-            for (int i = 3; i<numStates; i++){
+            for (int i = 3; i<numStates-1; i++){
                 for (int j = 0; j<maxEmission; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, del1);
                 }
@@ -259,9 +300,10 @@ public class Cnv_Hmm {
                 emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
+                emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
-            for (int i = 3; i<numStates; i++){
+            for (int i = 3; i<numStates-1; i++){
                 for (int j = 0; j<maxDistance; j++){
                     if (states.get(i).contains("-0") || states.get(i).contains("-9")){
                         int index = (i-3)/10;
@@ -276,6 +318,37 @@ public class Cnv_Hmm {
         System.out.println("Emission Matrix Created");
     }
     
+    public void printTransitionMatrix(){
+        try{     
+            FileWriter fstream = new FileWriter("TransitionMatrix.txt");
+            BufferedWriter out = new BufferedWriter(fstream);
+            for (int i=0; i<transitionMatrix.length; i++){
+                for (int j=0; j<transitionMatrix[0].length; j++){
+                    double prob = transitionMatrix[i][j];
+                    if (prob != Double.NEGATIVE_INFINITY){
+                        BigDecimal bd = new BigDecimal(prob);
+                        bd = bd.setScale(6, BigDecimal.ROUND_DOWN);
+                        out.write(bd.toString());
+                    }
+                    else{
+                        out.write(Double.toString(prob));
+                    }
+                    out.write("\t");
+                    if (j == transitionMatrix.length-1){
+                        out.write("\n");
+                    }
+                }
+            } 
+            out.close();
+        }catch (IOException e){//Catch exception if any
+            System.err.println("Error: " + e.getMessage());
+        }   
+    }
+    
+    public void printEmissionMatrix(){
+        
+    }
+
     //log(Poisson(k,lambda)) = klog(lambda) - lambda - SUM(j)_1..k
     public double logPoisson(double k, double l){
         double p = k * Math.log(l) - l;
@@ -410,6 +483,17 @@ public class Cnv_Hmm {
                     case 1: System.out.print("del1"); break;
                     case 2: System.out.print("dup1"); break;
                 }
+                //Breakpoints/Grid States
+                if (cnv[2] > 2){
+                    if (cnv[2] == numStates - 1){
+                        System.out.println("BP");
+                    }
+                    else{
+                        int index = (cnv[2]-3)/10;
+                        System.out.println(DelSizes.get(index));
+                    }
+                }
+                
             }
             //Diploid Case
             else{
@@ -418,6 +502,16 @@ public class Cnv_Hmm {
                     case 2: System.out.print("del2"); break;
                     case 3: System.out.print("dup1"); break;
                     case 4: System.out.print("dup2"); break;
+                }
+                //Breakpoints/Grid States
+                if (cnv[2] > 4){
+                    if (cnv[2] == numStates - 1){
+                        System.out.println("BP");
+                    }
+                    else{
+                        int index = (cnv[2]-3)/10;
+                        System.out.println(DelSizes.get(index));
+                    }
                 }
             }
             System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
