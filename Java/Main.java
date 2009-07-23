@@ -3,7 +3,6 @@ package cnv_hmm;
 import java.io.File;
 import java.util.ArrayList;
 
-
 public class Main {
 
     public static void main(String[] args) {
@@ -14,7 +13,7 @@ public class Main {
         File mapview = new File("default");
         File reference = new File("default");
         File parameters = new File("default");
-        File output = new File("default");
+//        File output = new File("default");
         
         if (args.length < 6){
             System.out.println(usage);
@@ -39,15 +38,12 @@ public class Main {
                 map.processFastaFile();
                 map.processMapViewFile();
                 Cnv_Hmm cnv = new Cnv_Hmm(parameters);
-                cnv.initializeTransitionMatrix();
 
                 cnv.printTransitionMatrix();
-//                cnv.printEmissionMatrix();
 
                 int avg = map.getAverageDistance();
                 int dev = map.getStandardDeviationDistance();
 
-                cnv.initializeEmissionMatrix(avg, dev);
                 ArrayList<String> keys = map.chromosomeNames;
 
                 for (int i = 0; i<keys.size(); i++){
