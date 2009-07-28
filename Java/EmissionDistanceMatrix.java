@@ -1,4 +1,3 @@
-package cnv_hmm;
 import java.util.ArrayList;
 
 public class EmissionDistanceMatrix {
@@ -18,14 +17,14 @@ public class EmissionDistanceMatrix {
                  emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[3][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[4][i] = logNormal(i, avgDistance, standardDevDistance);
-                 //Breakpoint State
-                 emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
+                 //Breakpoint States
+                 //emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
             for (int i = 5; i<numStates-1; i++){
                 for (int j = 0; j<maxDistance; j++){
-                    if (states.get(i).isInitialGridState || states.get(i).isFinalGridState){                       
-                        emissionDistanceMatrix[i][j] = logNormal(j, states.get(i).delSize + avgDistance, standardDevDistance);
+                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                        emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
                     }
                     else{
                         emissionDistanceMatrix[i][j] = logNormal(j, avgDistance, standardDevDistance);
@@ -42,13 +41,13 @@ public class EmissionDistanceMatrix {
                 emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
-                emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
+                //emissionDistanceMatrix[numStates-1][i] = logNormal(i, avgDistance, standardDevDistance);
             }
 
             for (int i = 3; i<numStates-1; i++){
                 for (int j = 0; j<maxDistance; j++){
-                    if (states.get(i).isInitialGridState || states.get(i).isFinalGridState){                        
-                        emissionDistanceMatrix[i][j] = logNormal(j, states.get(i).delSize + avgDistance, standardDevDistance);
+                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                        emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
                     }
                     else{
                         emissionDistanceMatrix[i][j] = logNormal(j, avgDistance, standardDevDistance);
@@ -56,9 +55,9 @@ public class EmissionDistanceMatrix {
                 }
             }
         }
-        System.out.println("Emission Matrix Created");        
+        System.out.println("Emission Matrix Created");
     }
-    
+
     //log(Normal, k, average, std deviation) = exp^(-(x-avg)^2) / 2*dev^2 - log(dev * sqrt(2pi))
     public double logNormal(int dis, double avg, double dev){
         double p = (-1) * ((double)dis - avg) * ((double)dis - avg);

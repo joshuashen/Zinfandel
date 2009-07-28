@@ -1,5 +1,3 @@
-package cnv_hmm;
-
 import java.io.File;
 import java.util.ArrayList;
 
@@ -38,11 +36,14 @@ public class Main {
                 map.processFastaFile();
                 map.processMapViewFile();
                 Cnv_Hmm cnv = new Cnv_Hmm(parameters);
-
-                cnv.printTransitionMatrix();
+                //cnv.printTransitionMatrix();
 
                 int avg = map.getAverageDistance();
                 int dev = map.getStandardDeviationDistance();
+
+                cnv.createTransitionMatrix();
+                cnv.createCoverageMatrix();
+                cnv.createDistanceMatrix(avg, dev);
 
                 ArrayList<String> keys = map.chromosomeNames;
 

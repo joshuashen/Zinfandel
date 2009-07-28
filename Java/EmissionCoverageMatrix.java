@@ -1,4 +1,3 @@
-package cnv_hmm;
 import java.util.ArrayList;
 
 //Create Emission Matrix
@@ -26,8 +25,8 @@ public class EmissionCoverageMatrix {
                 emissionCoverageMatrix[2][i] = logPoisson(i, del2);
                 emissionCoverageMatrix[3][i] = logPoisson(i, dup1);
                 emissionCoverageMatrix[4][i] = logPoisson(i, dup2);
-                //Breakpoint State
-                emissionCoverageMatrix[numStates-1][i] = logPoisson(i, lambda);
+                //Breakpoint States
+                //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, lambda);
             }
             //Set all emission coverage values for grid states- treat the same as Deletion1
             for (int i = 5; i<numStates-1; i++){
@@ -47,7 +46,7 @@ public class EmissionCoverageMatrix {
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
                 emissionCoverageMatrix[2][i] = logPoisson(i, dup1);
                 //Breakpoint state
-                emissionCoverageMatrix[numStates-1][i] = logPoisson(i, dup1);
+                //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, dup1);
             }
             //Set all emission coverage values for grid states- treat the same as Deletion1
             for (int i = 3; i<numStates-1; i++){

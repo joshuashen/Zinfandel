@@ -1,5 +1,3 @@
-package cnv_hmm;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -11,7 +9,8 @@ import java.util.ArrayList;
 import java.math.BigDecimal;
 
 public class Cnv_Hmm {
-    ArrayList<State> states = new ArrayList<State>();    //States for either Diploid or Haploid
+    //ArrayList<States> states = new ArrayList<States>();
+    ArrayList<State> states = new ArrayList<State>();       //States for either Diploid or Haploid
 
     /*  Diploid: 0-Normal 1-del1 2-del2 3-dup1 4-dup2
      *  Haploid: 0-Normal 1-del1 2-dup1
@@ -29,7 +28,7 @@ public class Cnv_Hmm {
     double avgCNVSize = 10000.0;    //Assumed size of CNVs
     double readSize = 35.0;               //Read Size
     double depthCov = 1.0;          //Depth Coverage
-    double[] initProb;              //Initial Probabilities for each State
+    double[] initProb;              //Initial Probabilities for each States
     double chrLength = 3000000000.0;
     int maxDeletionSize = 1000;    //Maximum Deletion Size
     int numGridStates;
@@ -42,16 +41,30 @@ public class Cnv_Hmm {
     public Cnv_Hmm(){
         initializeGridParams();
         avgCov = depthCov / readSize;   //Set average coverage
+        //Initialize States
+        if (genome.equalsIgnoreCase("h")){
+            initializeHaploidStates();
+        }
+        else{
+            initializeDiploidStates();
+        }
     }
     //Parameter File Provided
     public Cnv_Hmm(File params){
         initializeGridParams();
         readParameterFile(params);
         avgCov = depthCov / readSize;   //Set average coverage
+        //Initialize States
+        if (genome.equalsIgnoreCase("h")){
+            initializeHaploidStates();
+        }
+        else{
+            initializeDiploidStates();
+        }
     }
 
-    public void initializeGridParams(){
-        //Initialize Grid State Parameters- number of Grid States, deletion sizes
+    private void initializeGridParams(){
+        //Initialize Grid States Parameters- number of Grid States, deletion sizes
         int count = 0;
         double value = 100;
         DelSizes.add((int)value);
@@ -63,50 +76,92 @@ public class Cnv_Hmm {
         numGridStates = count;
     }
 
-    public void initializeHaploidStates(){
+    private void initializeHaploidStates(){
         //Original States
-        states.add(new State("normal"));
-        states.add(new State("del1"));
-        states.add(new State("dup1"));
+        states.add(new normalState());
+        states.add(new Deletion1State());
+        states.add(new Duplication1State());
         //Grid States
         for (int i = 0; i<numGridStates; i++){
             for (int j = 0;j<StatesPerDelSize; j++){
-                //name, isGrid, delSize, gridNumber
-                states.add(new State("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j, numGridStates));
+                //name, isGrid, delSize
+               
+                //Initial Grid State
+                if (j == 0){
+                    states.add(new InitialGridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
+                //Final Grid State
+                else if(j == StatesPerDelSize-1){
+                    states.add(new FinalGridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
+                //Middle Grid States
+                else{
+                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
             }
         }
         //Breakpoint state
-        states.add(new State("bp"));
+        //states.add(new BreakpointState());
         //Set initial probabilities: for each state- 1/number of states
         int numStates = states.size();
         initProb = new double[numStates];
         for (int i = 0; i<numStates; i++){
             initProb[i] = Math.log(1.0/numStates);
         }
+        System.out.println("States Initialized");
     }
 
-    public void initializeDiploidStates(){
+    private void initializeDiploidStates(){
         //Original States
-        states.add(new State("normal"));
-        states.add(new State("del1"));
-        states.add(new State("del2"));
-        states.add(new State("dup1")); 
-        states.add(new State("dup2"));
+        states.add(new normalState());
+        states.add(new Deletion1State());
+        states.add(new Deletion2State());
+        states.add(new Duplication1State());
+        states.add(new Duplication2State());
         //Grid States
         for (int i = 0; i<numGridStates; i++){            
             for (int j = 0;j<StatesPerDelSize; j++){
-                //name, isGrid, delSize, gridNumber
-                states.add(new State("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j, numGridStates));
+                //name, isGrid, delSize
+
+                //Initial Grid State
+                if (j == 0){
+                    states.add(new InitialGridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
+                //Final Grid State
+                else if(j == StatesPerDelSize-1){
+                    states.add(new FinalGridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
+                //Middle Grid States
+                else{
+                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                }
             }
         }
         //Breakpoint state
-        states.add(new State("bp"));
+        //states.add(new BreakpointState());
         //Set initial probabilities: for each state- 1/number of states
         int numStates = states.size();
         initProb = new double[numStates];
         for (int i = 0; i<numStates; i++){
             initProb[i] = Math.log(1.0/numStates);
         }
+        System.out.println("States Initialized");
+    }
+
+    public void createTransitionMatrix(){
+        TransitionMatrix tm = new TransitionMatrix(states, genome, numCNVs, chrLength, avgCNVSize,
+                                                   remainbreakpointProb, StatesPerDelSize, DelSizes);
+        transitionMatrix = tm.transitionMatrix;
+    }
+
+    public void createCoverageMatrix(){
+        EmissionCoverageMatrix ecm = new EmissionCoverageMatrix(states, genome, avgCov, maxCoverage);
+        emissionCoverageMatrix = ecm.emissionCoverageMatrix;
+    }
+
+    public void createDistanceMatrix(int avg, int stddev){
+        EmissionDistanceMatrix edm = new EmissionDistanceMatrix(states, genome, avg, stddev, maxDistance);
+        emissionDistanceMatrix = edm.emissionDistanceMatrix;
     }
 
     public void readParameterFile(File params){
@@ -121,14 +176,6 @@ public class Cnv_Hmm {
                     String parameterData = st.nextToken();
                     if (parameterName.equalsIgnoreCase("genome")){
                         genome = parameterData;
-                        //Haploid
-                        if (genome.equalsIgnoreCase("h")){
-                            initializeHaploidStates();
-                        }
-                        //Diploid
-                        else{
-                            initializeDiploidStates();
-                        }
                     }
                     //Set other parameters
                     else if (parameterName.equalsIgnoreCase("numCNVs")){
@@ -218,9 +265,15 @@ public class Cnv_Hmm {
         double[] prob = new double[numStates];
 
         for (int i = 1; i<chrSize; i++){
-            for (int j = 0; j<numStates; j++){     //Current State
-                for (int k = 0; k<numStates; k++){  //Previous State
-                    prob[k] = delta[k] + transitionMatrix[k][j];
+            for (int j = 0; j<numStates; j++){     //Current States
+                State st = states.get(j);
+                for (int k = 0; k<prob.length; k++){
+                    prob[k] = Double.NEGATIVE_INFINITY;
+                }
+                for (int l = 0; l<st.transitions.size(); l++){
+                    Transition tr = st.transitions.get(l);
+                    int index = states.indexOf(tr.startState);
+                    prob[index] = delta[index] + tr.transitionProb; 
                 }
                 //Find Optimal Probability
                 double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
@@ -230,12 +283,12 @@ public class Cnv_Hmm {
                         max = prob[x];
                         maxState = x;
                     }
-                }                
+                }
                 prevMap[i][j] = maxState;   //Record Optimal State
                 delta[j] = prob[prevMap[i][j]] + Emission((byte)j,chr.coverage[i],chr.distances[i]);
             }
         }
-        //Find Final Optimal State
+        //Find Final Optimal States
         double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
         byte lastBest = 0;
         for (byte x = 0; x<numStates; x++){
@@ -247,7 +300,7 @@ public class Cnv_Hmm {
         prevMap[chr.size][0] = lastBest;
 
         int flag = 0;   //Record if currently in a CNV
-        int[] bestPath = new int[chr.size]; //Optimal Path
+//        int[] bestPath = new int[chr.size]; //Optimal Path
 
         int s = 0;  //Start index
         int e = 0;  //End index
@@ -299,13 +352,16 @@ public class Cnv_Hmm {
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 2){
+	         /*
                     if (cnv[2] == numStates - 1){
                         System.out.println("BP");
                     }
-                    else{
-                        int index = (cnv[2]-3)/10;
-                        System.out.println(DelSizes.get(index));
-                    }
+		  */
+                    //else{
+                        //Downcast-need to ensure no ClassCastException
+                        GridState st = (GridState) states.get(cnv[2]);
+                        System.out.print(st.delSize);
+                    //}
                 }
 
             }
@@ -319,13 +375,18 @@ public class Cnv_Hmm {
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 4){
+/*
                     if (cnv[2] == numStates - 1){
                         System.out.println("BP");
                     }
-                    else{
-                        int index = (cnv[2]-3)/10;
-                        System.out.println(DelSizes.get(index));
-                    }
+*/
+//                    else{
+                        //Downcast-need to ensure no ClassCastException
+                        if (states.get(cnv[2]) instanceof GridState){
+                            GridState st = (GridState) states.get(cnv[2]);
+                            System.out.print(st.delSize);
+                        }
+//                    }
                 }
             }
             System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
@@ -336,4 +397,5 @@ public class Cnv_Hmm {
 
     }
 }
+
 
