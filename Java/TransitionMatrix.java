@@ -41,7 +41,7 @@ public class TransitionMatrix {
                     */
                     //Pr(Transition from grid state to itself)
                     else if (states.get(i) instanceof GridState){
-                        transitionMatrix[i][j] = Math.log(1-(double)StatesPerDelSize/((GridState)states.get(i)).delSize);
+                        transitionMatrix[i][j] = Math.log(1 - ((double)StatesPerDelSize/((GridState)states.get(i)).delSize));
                     }
                 }
                 //Probability of transitioning from one state to another

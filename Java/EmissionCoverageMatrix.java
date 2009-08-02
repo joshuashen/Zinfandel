@@ -28,10 +28,10 @@ public class EmissionCoverageMatrix {
                 //Breakpoint States
                 //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, lambda);
             }
-            //Set all emission coverage values for grid states- treat the same as Deletion1
-            for (int i = 5; i<numStates-1; i++){
+            //Set all emission coverage values for grid states- treat the same as normal
+            for (int i = 5; i<numStates; i++){
                 for (int j = 0; j<maxCoverage; j++){
-                    emissionCoverageMatrix[i][j] = logPoisson(j, del1);
+                    emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                 }
             }
         }
@@ -48,10 +48,10 @@ public class EmissionCoverageMatrix {
                 //Breakpoint state
                 //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, dup1);
             }
-            //Set all emission coverage values for grid states- treat the same as Deletion1
-            for (int i = 3; i<numStates-1; i++){
+            //Set all emission coverage values for grid states- treat the same as normal
+            for (int i = 3; i<numStates; i++){
                 for (int j = 0; j<maxCoverage; j++){
-                    emissionCoverageMatrix[i][j] = logPoisson(j, del1);
+                    emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                 }
             }
         }

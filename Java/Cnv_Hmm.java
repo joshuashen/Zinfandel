@@ -30,9 +30,9 @@ public class Cnv_Hmm {
     double depthCov = 1.0;          //Depth Coverage
     double[] initProb;              //Initial Probabilities for each States
     double chrLength = 3000000000.0;
-    int maxDeletionSize = 1000;    //Maximum Deletion Size
+//    int maxDeletionSize = 1000;    //Maximum Deletion Size
     int numGridStates;
-    double factor = 1.5;
+    double factor = 2;
     int StatesPerDelSize = 10;
     double remainbreakpointProb = 0.1;   
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
@@ -68,7 +68,7 @@ public class Cnv_Hmm {
         int count = 0;
         double value = 100;
         DelSizes.add((int)value);
-        while(value < maxDeletionSize){
+        while(value <= maxDistance){
             value = value * factor;
             DelSizes.add((int)value);
             count++;
@@ -360,7 +360,7 @@ public class Cnv_Hmm {
                     //else{
                         //Downcast-need to ensure no ClassCastException
                         GridState st = (GridState) states.get(cnv[2]);
-                        System.out.print(st.delSize);
+                        System.out.print(st.delSize + "-" + st.gridNumber);
                     //}
                 }
 
@@ -384,7 +384,7 @@ public class Cnv_Hmm {
                         //Downcast-need to ensure no ClassCastException
                         if (states.get(cnv[2]) instanceof GridState){
                             GridState st = (GridState) states.get(cnv[2]);
-                            System.out.print(st.delSize);
+                            System.out.print(st.delSize + "-" + st.gridNumber);
                         }
 //                    }
                 }
