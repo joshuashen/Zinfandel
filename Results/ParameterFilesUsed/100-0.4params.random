@@ -1,0 +1,5 @@
+genome h
+numCNVs 100
+avgCNVSize 100
+depthCov 0.4
+readSize 35
