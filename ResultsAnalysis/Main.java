@@ -1,3 +1,4 @@
+package resultstesting;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -27,6 +28,7 @@ public class Main {
                         trueCNVs.add(new cnv(type, size, startPos, endPos));
                     }
                 }
+           System.out.println(trueCNVs.size());
            System.out.println("True CNVs Loaded");
            in.close();
       }
@@ -80,7 +82,7 @@ public class Main {
                   if (trueCNVs.get(i).type.equalsIgnoreCase("DEL")){
                     valid = true;
                     String type = resultCNVs.get(j).type;
-                    if (!type.equalsIgnoreCase("del1")){
+                    if (!type.equalsIgnoreCase("del1") && !type.equalsIgnoreCase("dup1")){
                         int x = type.indexOf("-");
                         int delSize = Integer.valueOf(type.substring(0, x));
                         if (delSize == trueCNVs.get(i).size){
@@ -102,7 +104,8 @@ public class Main {
           boolean found = false;
           for (int j = 0; j<trueCNVs.size(); j++){
             if ((resultCNVs.get(i).startPos >= trueCNVs.get(j).startPos - errorRange) &&
-                 resultCNVs.get(i).endPos <= trueCNVs.get(j).endPos + errorRange){
+                 resultCNVs.get(i).endPos <= trueCNVs.get(j).endPos + errorRange &&
+                 trueCNVs.get(j).type.equalsIgnoreCase("DEL")){
                 found = true;
             }
           }

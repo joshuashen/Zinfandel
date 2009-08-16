@@ -1,3 +1,5 @@
+package resultstesting;
+
 public class cnv {
 String type;
 int size;
