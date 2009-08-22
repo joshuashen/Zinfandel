@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -70,6 +71,9 @@ public class Mapping {
         try{                    
            FileReader reader = new FileReader(mapview);
            BufferedReader in = new BufferedReader(reader);
+           ArrayList<String> positiveBuffer = new ArrayList<String>();
+           ArrayList<String> negativeBuffer = new ArrayList<String>();
+
            System.out.println("Loading MapView File.");
            String line;    //stores line
                 int count = 0;      //number of reads counted
@@ -83,10 +87,26 @@ public class Mapping {
                     String direction = st.nextToken();
                     int distance = Integer.valueOf(st.nextToken());
                     chromosomes.get(ref).incrementCoverage(start);
-                    if (distance > 0 && distance < 1000){
-                        chromosomes.get(ref).setDistance(start, distance);
-                        total+=Math.abs(distance);
-                        count++;
+                    if (distance > 0 && distance <= 1000){
+                        String readString = read.substring(0, read.length() - 2);                        
+                        if (!negativeBuffer.contains(readString)){
+                            positiveBuffer.add(readString);
+                            chromosomes.get(ref).setDistance(start, distance);
+                            total+=Math.abs(distance);
+                            count++;
+                        }
+                        else{
+                            negativeBuffer.remove(readString);
+                        }
+                    }
+                    else if (distance < 0){
+                        String readString = read.substring(0, read.length() - 2);                        
+                        if (positiveBuffer.contains(readString)){
+                            positiveBuffer.remove(readString);
+                        }
+                        else{
+                            negativeBuffer.add(readString);
+                        }
                     }
                     int flag = Integer.valueOf(st.nextToken());
                     chromosomes.get(ref).setFlag(start, flag);

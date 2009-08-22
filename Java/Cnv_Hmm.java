@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -255,7 +256,12 @@ public class Cnv_Hmm {
         else{
             delta = new double[numStates];
         }
+
+	 //High Memory Usage
+	 System.out.println("OK before prevMap");
         byte[][] prevMap = new byte[chrSize + 1][numStates];    //Holds Optimal Previous state
+	 System.out.println("OK after prevMap");
+
         //Set Initial Probabilities and prevMap
         for (byte i = 0; i<numStates; i++){
             delta[i] = initProb[i] + Emission(i, chr.coverage[0], chr.distances[0]);
@@ -266,27 +272,27 @@ public class Cnv_Hmm {
 
         for (int i = 1; i<chrSize; i++){
             for (int j = 0; j<numStates; j++){     //Current States
-                State st = states.get(j);
-                for (int k = 0; k<prob.length; k++){
-                    prob[k] = Double.NEGATIVE_INFINITY;
-                }
-                for (int l = 0; l<st.transitions.size(); l++){
-                    Transition tr = st.transitions.get(l);
-                    int index = states.indexOf(tr.startState);
-                    prob[index] = delta[index] + tr.transitionProb; 
-                }
-                //Find Optimal Probability
-                double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
-                byte maxState = 0;
-                for (byte x = 0; x<numStates; x++){
-                    if (max < prob[x]){
-                        max = prob[x];
-                        maxState = x;
+                    State st = states.get(j);
+                    for (int k = 0; k<prob.length; k++){
+                        prob[k] = Double.NEGATIVE_INFINITY;
                     }
-                }
-                prevMap[i][j] = maxState;   //Record Optimal State
-                delta[j] = prob[prevMap[i][j]] + Emission((byte)j,chr.coverage[i],chr.distances[i]);
-            }
+                    for (int l = 0; l<st.transitions.size(); l++){
+                        Transition tr = st.transitions.get(l);
+                        int index = states.indexOf(tr.startState);
+                        prob[index] = delta[index] + tr.transitionProb; 
+                    }
+                    //Find Optimal Probability
+                    double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
+                    byte maxState = 0;
+                    for (byte x = 0; x<numStates; x++){
+                        if (max < prob[x]){
+                            max = prob[x];
+                            maxState = x;
+                        }
+                    }
+                    prevMap[i][j] = maxState;   //Record Optimal State
+                    delta[j] = prob[prevMap[i][j]] + Emission((byte)j,chr.coverage[i],chr.distances[i]);
+                }            
         }
         //Find Final Optimal States
         double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
@@ -304,7 +310,7 @@ public class Cnv_Hmm {
 
         int s = 0;  //Start index
         int e = 0;  //End index
-
+	 
         //Maintains CNV locations and type
         ArrayList<int[]> cnvs = new ArrayList<int[]>();        
 
@@ -392,10 +398,9 @@ public class Cnv_Hmm {
             System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
             System.out.printf("\t%10d", cnv[1] + 1);  //Increment by 1 to get correct end location
             System.out.printf("\t%10d", cnv[1] - cnv[0]);   //Length of CNV
-            System.out.println();            
+            System.out.println();              
         }
 
     }
 }
-
 

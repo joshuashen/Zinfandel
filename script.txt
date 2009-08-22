@@ -1,0 +1,10 @@
+#!/bin/sh
+cut -f1 /ifs/scratch/c2b2/ip_lab/yshen/Atlas-CNV/human/FixedSizeCNVs/shotgun.simu_100bp_target.fa.read1.fastq.map.mapview 
+| cut -f1 -d '/' | sort -u | ruby -e 'a = []; 
+while line=ARGF.gets do a << line.chomp end; puts a.sort_by {rand}.join("\n")' 
+> 100-0.2human.map.mapview.Read-pairs-shuffled
+
+head -420000 100-0.2human.map.mapview.Read-pairs-shuffled > 100-0.2Random_210K_prefix
+
+fgrep -f 100-0.2Random_210K_prefix -w /ifs/scratch/c2b2/ip_lab/yshen/Atlas-CNV/human/FixedSizeCNVs/shotgun.simu_100bp_target.fa.read1.fastq.map.mapview
+> Random_210K_pairs.mapview

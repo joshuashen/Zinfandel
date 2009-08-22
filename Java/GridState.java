@@ -1,3 +1,4 @@
+
 public class GridState extends State{
     int delSize = -1;
     int gridNumber = -1;

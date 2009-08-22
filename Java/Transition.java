@@ -1,3 +1,4 @@
+
 public class Transition {
     State startState;
     State endState;

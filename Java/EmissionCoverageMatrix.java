@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 
 //Create Emission Matrix
@@ -17,9 +18,9 @@ public class EmissionCoverageMatrix {
         if (genome.equalsIgnoreCase("d")){
             del1 = lambda/2; del2 = lambda/100;
             dup1 = lambda * 1.5; dup2 = lambda * 2.0;
-            emissionCoverageMatrix = new double[numStates][maxCoverage];
+            emissionCoverageMatrix = new double[numStates][maxCoverage+1];
 
-            for (int i = 0; i<maxCoverage; i++){
+            for (int i = 0; i<maxCoverage+1; i++){
                 emissionCoverageMatrix[0][i] = logPoisson(i, lambda);
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
                 emissionCoverageMatrix[2][i] = logPoisson(i, del2);
@@ -30,7 +31,7 @@ public class EmissionCoverageMatrix {
             }
             //Set all emission coverage values for grid states- treat the same as normal
             for (int i = 5; i<numStates; i++){
-                for (int j = 0; j<maxCoverage; j++){
+                for (int j = 0; j<maxCoverage+1; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                 }
             }
@@ -39,9 +40,9 @@ public class EmissionCoverageMatrix {
         else{
             del1 = lambda/100; dup1 = lambda * 2;
             del2 = del1; dup2 = dup1;
-            emissionCoverageMatrix = new double[numStates][maxCoverage];
+            emissionCoverageMatrix = new double[numStates][maxCoverage+1];
 
-            for (int i = 0; i<maxCoverage; i++){
+            for (int i = 0; i<maxCoverage+1; i++){
                 emissionCoverageMatrix[0][i] = logPoisson(i, lambda);
                 emissionCoverageMatrix[1][i] = logPoisson(i, del1);
                 emissionCoverageMatrix[2][i] = logPoisson(i, dup1);
@@ -50,7 +51,7 @@ public class EmissionCoverageMatrix {
             }
             //Set all emission coverage values for grid states- treat the same as normal
             for (int i = 3; i<numStates; i++){
-                for (int j = 0; j<maxCoverage; j++){
+                for (int j = 0; j<maxCoverage+1; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                 }
             }
