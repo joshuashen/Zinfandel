@@ -1,3 +1,4 @@
+package cnv_hmm;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +20,7 @@ public class Cnv_Hmm {
     double[][] transitionMatrix;    //Transition Probabilities
     double[][] emissionCoverageMatrix;      //Emission Coverage Probabilities
     double[][] emissionDistanceMatrix;       //Emission Distance Proabbilities
-    
+
     //Default Values: Potentially overidden by parameter file
     int maxCoverage = 100;  //Maximum emission, if larger, emission is set to 100
     int maxDistance = 1000; //Maximum paired distance, if larger, set to 1000
@@ -35,7 +36,7 @@ public class Cnv_Hmm {
     int numGridStates;
     double factor = 2;
     int StatesPerDelSize = 10;
-    double remainbreakpointProb = 0.1;   
+    double remainbreakpointProb = 0.1;
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
 
     //Default Constructor without Parameter File
@@ -86,7 +87,7 @@ public class Cnv_Hmm {
         for (int i = 0; i<numGridStates; i++){
             for (int j = 0;j<StatesPerDelSize; j++){
                 //name, isGrid, delSize
-               
+
                 //Initial Grid State
                 if (j == 0){
                     states.add(new InitialGridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
@@ -120,7 +121,7 @@ public class Cnv_Hmm {
         states.add(new Duplication1State());
         states.add(new Duplication2State());
         //Grid States
-        for (int i = 0; i<numGridStates; i++){            
+        for (int i = 0; i<numGridStates; i++){
             for (int j = 0;j<StatesPerDelSize; j++){
                 //name, isGrid, delSize
 
@@ -199,9 +200,9 @@ public class Cnv_Hmm {
            e.printStackTrace();
         }
     }
-    
+
     public void printTransitionMatrix(){
-        try{     
+        try{
             FileWriter fstream = new FileWriter("TransitionMatrix.txt");
             BufferedWriter out = new BufferedWriter(fstream);
             for (int i=0; i<transitionMatrix.length; i++){
@@ -220,13 +221,13 @@ public class Cnv_Hmm {
                         out.write("\n");
                     }
                 }
-            } 
+            }
             out.close();
         }catch (IOException e){//Catch exception if any
             System.err.println("Error: " + e.getMessage());
-        }   
+        }
     }
-   
+
     //Accessor for Emission Matrix
     public double Emission(byte state, byte cov, int distance){
         if (cov > maxCoverage){
@@ -245,7 +246,7 @@ public class Cnv_Hmm {
         }
     }
 
-    //Viterbi Algorithm for Optimal Path    
+    //Viterbi Algorithm for Optimal Path
     public void runViterbiAlgorithm(Chromosome chr, String name){
         int chrSize = chr.size; //Chromosome length
         int numStates = states.size();  //Number of States
@@ -260,12 +261,14 @@ public class Cnv_Hmm {
 	 //High Memory Usage
 	 System.out.println("OK before prevMap");
         byte[][] prevMap = new byte[chrSize + 1][numStates];    //Holds Optimal Previous state
+        double[] deltaValues = new double[chrSize];
 	 System.out.println("OK after prevMap");
 
         //Set Initial Probabilities and prevMap
         for (byte i = 0; i<numStates; i++){
             delta[i] = initProb[i] + Emission(i, chr.coverage[0], chr.distances[0]);
             prevMap[0][i] = i;
+            deltaValues[0] = delta[0];
         }
 
         double[] prob = new double[numStates];
@@ -279,7 +282,7 @@ public class Cnv_Hmm {
                     for (int l = 0; l<st.transitions.size(); l++){
                         Transition tr = st.transitions.get(l);
                         int index = states.indexOf(tr.startState);
-                        prob[index] = delta[index] + tr.transitionProb; 
+                        prob[index] = delta[index] + tr.transitionProb;
                     }
                     //Find Optimal Probability
                     double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
@@ -290,9 +293,16 @@ public class Cnv_Hmm {
                             maxState = x;
                         }
                     }
+                    /*
+                    if (j != 0 && maxState == 0){
+                        System.out.println(i + "\t" + delta[0]);
+                    }
+                    */
+                    
                     prevMap[i][j] = maxState;   //Record Optimal State
                     delta[j] = prob[prevMap[i][j]] + Emission((byte)j,chr.coverage[i],chr.distances[i]);
-                }            
+                    deltaValues[i] = delta[0];
+                }
         }
         //Find Final Optimal States
         double max = Double.NEGATIVE_INFINITY;  //MUST use NEGATIVE_INFINITY
@@ -310,9 +320,9 @@ public class Cnv_Hmm {
 
         int s = 0;  //Start index
         int e = 0;  //End index
-	 
+
         //Maintains CNV locations and type
-        ArrayList<int[]> cnvs = new ArrayList<int[]>();        
+        ArrayList<int[]> cnvs = new ArrayList<int[]>();
 
         lastBest = 0;
         for (int i = chr.size; i>0; i--){
@@ -341,20 +351,21 @@ public class Cnv_Hmm {
                 flag = 0;
                 s = i;
                 e = i;
-            }            
+            }
             lastBest = state;
         }
 
         //Prints out result either to specified file or to standard output
-        System.out.println("\nCNVs: chromosome name, type, start point, end point, cnv length\n");
+        System.out.println("\nCNVs: chromosome name, type, start point, end point, cnv length, deltaS\n");
         for (int i = cnvs.size()-1; i >= 0; i--){
+            boolean GridCNV = false;
             int [] cnv = cnvs.get(i);
-            System.out.print(name+"\t");
+            
             //Haploid Case
             if (genome.equalsIgnoreCase("h")){
                 switch(cnv[2]){
-                    case 1: System.out.print("del1"); break;
-                    case 2: System.out.print("dup1"); break;
+                    case 1: System.out.print(name+"\t"); System.out.print("del1"); break;
+                    case 2: System.out.print(name+"\t"); System.out.print("dup1"); break;
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 2){
@@ -365,8 +376,24 @@ public class Cnv_Hmm {
 		  */
                     //else{
                         //Downcast-need to ensure no ClassCastException
-                        GridState st = (GridState) states.get(cnv[2]);
-                        System.out.print(st.delSize + "-" + st.gridNumber);
+                        if (states.get(cnv[2]) instanceof GridState){
+                            GridCNV = true;
+                            GridState st = (GridState) states.get(cnv[2]);
+                            if (i - (StatesPerDelSize-1) >= 0){                                
+                                System.out.print(st.delSize);
+                                int [] FinalGridCNV = cnvs.get(i - (StatesPerDelSize-1));
+                                int startLoc = cnv[0];
+                                int endLoc = FinalGridCNV[1];
+                                System.out.printf("\t%10d", startLoc + 1);  //Increment by 1 to get correct start location
+                                System.out.printf("\t%10d", endLoc + 1);  //Increment by 1 to get correct end location
+                                System.out.printf("\t%10d", endLoc - startLoc);   //Length of CNV
+                                System.out.print("\t");
+                                System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
+                                
+                                System.out.println();
+                                i = i - (StatesPerDelSize-1);
+                            }
+                        }
                     //}
                 }
 
@@ -374,10 +401,10 @@ public class Cnv_Hmm {
             //Diploid Case
             else{
                 switch(cnv[2]){
-                    case 1: System.out.print("del1"); break;
-                    case 2: System.out.print("del2"); break;
-                    case 3: System.out.print("dup1"); break;
-                    case 4: System.out.print("dup2"); break;
+                    case 1: System.out.print(name+"\t"); System.out.print("del1"); break;
+                    case 2: System.out.print(name+"\t"); System.out.print("del2"); break;
+                    case 3: System.out.print(name+"\t"); System.out.print("dup1"); break;
+                    case 4: System.out.print(name+"\t"); System.out.print("dup2"); break;
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 4){
@@ -389,18 +416,35 @@ public class Cnv_Hmm {
 //                    else{
                         //Downcast-need to ensure no ClassCastException
                         if (states.get(cnv[2]) instanceof GridState){
+                            GridCNV = true;
                             GridState st = (GridState) states.get(cnv[2]);
-                            System.out.print(st.delSize + "-" + st.gridNumber);
+                            if (i - (StatesPerDelSize-1) >= 0){                                
+                                System.out.print(st.delSize);
+                                int [] FinalGridCNV = cnvs.get(i - (StatesPerDelSize-1));
+                                int startLoc = cnv[0];
+                                int endLoc = FinalGridCNV[1];
+                                System.out.printf("\t%10d", startLoc + 1);  //Increment by 1 to get correct start location
+                                System.out.printf("\t%10d", endLoc + 1);  //Increment by 1 to get correct end location
+                                System.out.printf("\t%10d", endLoc - startLoc);   //Length of CNV
+                                System.out.print("\t");
+                                System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
+                                
+                                i = i - (StatesPerDelSize-1);
+                            }
                         }
 //                    }
                 }
             }
-            System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
-            System.out.printf("\t%10d", cnv[1] + 1);  //Increment by 1 to get correct end location
-            System.out.printf("\t%10d", cnv[1] - cnv[0]);   //Length of CNV
-            System.out.println();              
+            if (!GridCNV){
+                System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
+                System.out.printf("\t%10d", cnv[1] + 1);  //Increment by 1 to get correct end location
+                System.out.printf("\t%10d", cnv[1] - cnv[0]);   //Length of CNV
+                System.out.print("\t");
+                System.out.print(deltaValues[cnv[0]] - deltaValues[cnv[1]]);   //delta S
+                
+                System.out.println();
+            }
         }
-
     }
 }
 

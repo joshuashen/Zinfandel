@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -87,7 +87,7 @@ public class Mapping {
                     String direction = st.nextToken();
                     int distance = Integer.valueOf(st.nextToken());
                     chromosomes.get(ref).incrementCoverage(start);
-                    if (distance > 0 && distance <= 1000){
+                    if (distance >= 0 && distance <= 1000){
                         String readString = read.substring(0, read.length() - 2);                        
                         if (!negativeBuffer.contains(readString)){
                             positiveBuffer.add(readString);

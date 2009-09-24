@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.util.ArrayList;
 
 public class EmissionDistanceMatrix {
@@ -12,7 +12,7 @@ public class EmissionDistanceMatrix {
             emissionDistanceMatrix = new double[numStates][maxDistance+1];
 
             //Set emission distance maxtrix for normal state
-            for (int i = 0; i<maxDistance+1; i++){
+            for (int i = 0; i<maxDistance; i++){
                  emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
                  emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
@@ -23,7 +23,7 @@ public class EmissionDistanceMatrix {
             }
 
             for (int i = 5; i<numStates; i++){
-                for (int j = 0; j<maxDistance+1; j++){
+                for (int j = 0; j<maxDistance; j++){
                     if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
                         emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
                     }
@@ -35,10 +35,10 @@ public class EmissionDistanceMatrix {
         }
         //Haploid Case
         else{
-            emissionDistanceMatrix = new double[numStates][maxDistance+1];
+            emissionDistanceMatrix = new double[numStates][maxDistance];
 
             //Set emission distance maxtrix for normal state, set to negative infinity for other states
-            for (int i = 0; i<maxDistance+1; i++){
+            for (int i = 0; i<maxDistance; i++){
                 emissionDistanceMatrix[0][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[1][i] = logNormal(i, avgDistance, standardDevDistance);
                 emissionDistanceMatrix[2][i] = logNormal(i, avgDistance, standardDevDistance);
@@ -46,7 +46,7 @@ public class EmissionDistanceMatrix {
             }
 
             for (int i = 3; i<numStates; i++){
-                for (int j = 0; j<maxDistance+1; j++){
+                for (int j = 0; j<maxDistance; j++){
                     if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
                         emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
                     }
