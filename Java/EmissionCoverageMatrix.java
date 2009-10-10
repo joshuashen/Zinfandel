@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.util.ArrayList;
 
 //Create Emission Matrix
@@ -29,10 +29,22 @@ public class EmissionCoverageMatrix {
                 //Breakpoint States
                 //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, lambda);
             }
-            //Set all emission coverage values for grid states- treat the same as normal
+/*
+            //Set all emission coverage values for grid states- treat the same as normal(change to del1)
             for (int i = 5; i<numStates; i++){
                 for (int j = 0; j<maxCoverage; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
+                }
+            }
+*/
+            for (int i = 5; i<numStates; i++){
+                for (int j = 0; j<maxCoverage; j++){
+                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                        emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
+                    }
+                    else{
+                        emissionCoverageMatrix[i][j] = logPoisson(j, del1);
+                    }
                 }
             }
         }
@@ -49,12 +61,26 @@ public class EmissionCoverageMatrix {
                 //Breakpoint state
                 //emissionCoverageMatrix[numStates-1][i] = logPoisson(i, dup1);
             }
+/*
             //Set all emission coverage values for grid states- treat the same as normal
             for (int i = 3; i<numStates; i++){
                 for (int j = 0; j<maxCoverage; j++){
                     emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                 }
             }
+*/
+            //Treat initial/final as normal- middle states as deletions
+            for (int i = 3; i<numStates; i++){
+                for (int j = 0; j<maxCoverage; j++){
+                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                        emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
+                    }
+                    else{
+                        emissionCoverageMatrix[i][j] = logPoisson(j, del1);
+                    }
+                }
+            }
+
         }
         System.out.println("Emission Coverage Matrix Created");
     }

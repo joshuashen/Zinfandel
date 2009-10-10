@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 public class Chromosome {
     String name;        //Chromosome Name
     int size;           //Seqence Length of the Chromosome
@@ -13,7 +13,7 @@ public class Chromosome {
         size = s;
         coverage = new byte[size];
         distances = new int[size];
-        flags = new int[size];
+        //flags = new int[size];
 
         //initialize all distance to -1, signifies no read at this position i if distance[i] remains -1
         for (int i = 0; i<size; i++){
@@ -30,9 +30,10 @@ public class Chromosome {
     public void setDistance(int pos, int distance){
         distances[pos-1] = distance;
     }
-
+/*
     //Sets flag for base-pair position
     public void setFlag(int pos, int flag){
         flags[pos-1] = flag;
     }
+*/
 }

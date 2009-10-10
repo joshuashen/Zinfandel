@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,7 +36,7 @@ public class Cnv_Hmm {
     int numGridStates;
     double factor = 2;
     int StatesPerDelSize = 10;
-    double remainbreakpointProb = 0.1;
+    double remainbreakpointProb = 0.10;
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
 
     //Default Constructor without Parameter File
@@ -192,6 +192,9 @@ public class Cnv_Hmm {
                     else if (parameterName.equalsIgnoreCase("readSize")){
                         readSize = Integer.valueOf(parameterData);
                     }
+                    else if (parameterName.equalsIgnoreCase("GridNum")){
+                        StatesPerDelSize = Integer.valueOf(parameterData);
+                    }
                 }
            System.out.println("Parameter File Processed");
            in.close();
@@ -242,7 +245,7 @@ public class Cnv_Hmm {
         }
         //No read at position
         else{
-            return emissionCoverageMatrix[state][cov];
+            return emissionCoverageMatrix[state][cov] + Math.log(1.0/1000);
         }
     }
 
@@ -261,14 +264,14 @@ public class Cnv_Hmm {
 	 //High Memory Usage
 	 System.out.println("OK before prevMap");
         byte[][] prevMap = new byte[chrSize + 1][numStates];    //Holds Optimal Previous state
-        double[] deltaValues = new double[chrSize];
+        //double[] deltaValues = new double[chrSize];
 	 System.out.println("OK after prevMap");
 
         //Set Initial Probabilities and prevMap
         for (byte i = 0; i<numStates; i++){
             delta[i] = initProb[i] + Emission(i, chr.coverage[0], chr.distances[0]);
             prevMap[0][i] = i;
-            deltaValues[0] = delta[0];
+            //deltaValues[0] = delta[0];
         }
 
         double[] prob = new double[numStates];
@@ -301,7 +304,7 @@ public class Cnv_Hmm {
                     
                     prevMap[i][j] = maxState;   //Record Optimal State
                     delta[j] = prob[prevMap[i][j]] + Emission((byte)j,chr.coverage[i],chr.distances[i]);
-                    deltaValues[i] = delta[0];
+                    //deltaValues[i] = delta[0];
                 }
         }
         //Find Final Optimal States
@@ -369,6 +372,7 @@ public class Cnv_Hmm {
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 2){
+
 	         /*
                     if (cnv[2] == numStates - 1){
                         System.out.println("BP");
@@ -379,7 +383,8 @@ public class Cnv_Hmm {
                         if (states.get(cnv[2]) instanceof GridState){
                             GridCNV = true;
                             GridState st = (GridState) states.get(cnv[2]);
-                            if (i - (StatesPerDelSize-1) >= 0){                                
+                            if (i - (StatesPerDelSize-1) >= 0){
+                                System.out.print(name+"\t");
                                 System.out.print(st.delSize);
                                 int [] FinalGridCNV = cnvs.get(i - (StatesPerDelSize-1));
                                 int startLoc = cnv[0];
@@ -388,7 +393,7 @@ public class Cnv_Hmm {
                                 System.out.printf("\t%10d", endLoc + 1);  //Increment by 1 to get correct end location
                                 System.out.printf("\t%10d", endLoc - startLoc);   //Length of CNV
                                 System.out.print("\t");
-                                System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
+                                //System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
                                 
                                 System.out.println();
                                 i = i - (StatesPerDelSize-1);
@@ -408,6 +413,9 @@ public class Cnv_Hmm {
                 }
                 //Breakpoints/Grid States
                 if (cnv[2] > 4){
+                    //GridState st = (GridState) states.get(cnv[2]);
+                    //System.out.print(name+"\t");
+                    //System.out.print(st.delSize + "-" + st.gridNumber);
 /*
                     if (cnv[2] == numStates - 1){
                         System.out.println("BP");
@@ -415,10 +423,12 @@ public class Cnv_Hmm {
 */
 //                    else{
                         //Downcast-need to ensure no ClassCastException
+
                         if (states.get(cnv[2]) instanceof GridState){
                             GridCNV = true;
                             GridState st = (GridState) states.get(cnv[2]);
-                            if (i - (StatesPerDelSize-1) >= 0){                                
+                            if (i - (StatesPerDelSize-1) >= 0){
+                                System.out.print(name+"\t");
                                 System.out.print(st.delSize);
                                 int [] FinalGridCNV = cnvs.get(i - (StatesPerDelSize-1));
                                 int startLoc = cnv[0];
@@ -427,20 +437,23 @@ public class Cnv_Hmm {
                                 System.out.printf("\t%10d", endLoc + 1);  //Increment by 1 to get correct end location
                                 System.out.printf("\t%10d", endLoc - startLoc);   //Length of CNV
                                 System.out.print("\t");
-                                System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
+                                //System.out.print(deltaValues[startLoc] - deltaValues[endLoc]);   //delta S
                                 
+                                System.out.println();
                                 i = i - (StatesPerDelSize-1);
                             }
                         }
+
 //                    }
                 }
             }
             if (!GridCNV){
+            //if (cnv[2] != 4){
                 System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
                 System.out.printf("\t%10d", cnv[1] + 1);  //Increment by 1 to get correct end location
                 System.out.printf("\t%10d", cnv[1] - cnv[0]);   //Length of CNV
                 System.out.print("\t");
-                System.out.print(deltaValues[cnv[0]] - deltaValues[cnv[1]]);   //delta S
+                //System.out.print(deltaValues[cnv[0]] - deltaValues[cnv[1]]);   //delta S
                 
                 System.out.println();
             }

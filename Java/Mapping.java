@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -15,12 +15,14 @@ public class Mapping {
     File reference;                     //E.coli.K12-MG1655.fasta
     int averageDistance;                //Average distance
     int standardDevDistance;            //Standard deviation of distance
-
+    int limit;                          //Max bp number
+    
     //Initialize Files and new Chromosomes ArrayList
-    public Mapping(File mv, File ref){
+    public Mapping(File mv, File ref, int limit){
         mapview = mv;
         reference = ref;
-        chromosomes = new Hashtable<String, Chromosome>();
+        this.limit = limit;
+        chromosomes = new Hashtable<String, Chromosome>();       
     }
 
     public int getAverageDistance(){
@@ -45,7 +47,7 @@ public class Mapping {
                StringTokenizer st = new StringTokenizer(line.substring(1), " ");
                name = st.nextToken();   //Name is the string immediately following the ">" symbol
            }
-           while ((line = in.readLine()) != null){
+           while ((line = in.readLine()) != null && seqLength < limit){
                if (line.startsWith(">")){   //Start of new Chromosome
                    chromosomes.put(name, new Chromosome(name, seqLength));  //Add Chromosome to HashTable
                    chromosomeNames.add(name);
@@ -57,7 +59,9 @@ public class Mapping {
                    seqLength += line.length();
                }
            }
-           chromosomes.put(name, new Chromosome(name, seqLength));  //Add Final Chromosome
+	    chromosomes.put(name, new Chromosome(name, limit));  //Add Final Chromosome
+//           chromosomes.put(name, new Chromosome(name, seqLength));  //Add Final Chromosome
+           System.out.println(seqLength);
            chromosomeNames.add(name);
            System.out.println("Reference Chromosomes Loaded.");
            in.close();
@@ -77,7 +81,7 @@ public class Mapping {
            System.out.println("Loading MapView File.");
            String line;    //stores line
                 int count = 0;      //number of reads counted
-                int total = 0;      //total distance
+                long total = 0;      //total distance
                 String ref = "";    //reference name;
                 while((line = in.readLine()) != null){
                     StringTokenizer st = new StringTokenizer(line, "\t");
@@ -86,14 +90,21 @@ public class Mapping {
                     int start = Integer.valueOf(st.nextToken());
                     String direction = st.nextToken();
                     int distance = Integer.valueOf(st.nextToken());
-                    chromosomes.get(ref).incrementCoverage(start);
+                    
+                    if (start < limit){
+                        chromosomes.get(ref).incrementCoverage(start);
+                    }
+                    
                     if (distance >= 0 && distance <= 1000){
                         String readString = read.substring(0, read.length() - 2);                        
                         if (!negativeBuffer.contains(readString)){
                             positiveBuffer.add(readString);
-                            chromosomes.get(ref).setDistance(start, distance);
-                            total+=Math.abs(distance);
-                            count++;
+                            
+                            if (start < limit){
+                                chromosomes.get(ref).setDistance(start, distance);
+                                total+=Math.abs(distance);
+                                count++;
+                            }
                         }
                         else{
                             negativeBuffer.remove(readString);
@@ -103,17 +114,21 @@ public class Mapping {
                         String readString = read.substring(0, read.length() - 2);                        
                         if (positiveBuffer.contains(readString)){
                             positiveBuffer.remove(readString);
+                            //chromosomes.get(ref).setDistance(start, Math.abs(distance));
+                            //total+=Math.abs(distance);
+                            //count++;
                         }
                         else{
                             negativeBuffer.add(readString);
                         }
                     }
-                    int flag = Integer.valueOf(st.nextToken());
-                    chromosomes.get(ref).setFlag(start, flag);
+                    //int flag = Integer.valueOf(st.nextToken());
+                    //chromosomes.get(ref).setFlag(start, flag);
                 }
                 
                 double avgDistance = ((double) total)/count;
                 averageDistance = (int) avgDistance;
+                System.out.println(avgDistance + "\t" + averageDistance);
                 Chromosome c = chromosomes.get(ref);
                 int[] distances = c.distances;
                 long sum = 0;
@@ -127,6 +142,7 @@ public class Mapping {
                 }
                 double Dev = Math.sqrt((double) Math.abs(sum)/num);
                 standardDevDistance = (int) Dev;
+                System.out.println(Dev + "\t" + standardDevDistance);
 
            System.out.println("MapView File Processed");
            in.close();

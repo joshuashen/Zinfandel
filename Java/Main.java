@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -33,7 +33,7 @@ public class Main {
                 }
             }
             if (mapview.exists() && reference.exists() && parameters.exists()){
-                Mapping map = new Mapping(mapview, reference);
+                Mapping map = new Mapping(mapview, reference, 15000000);
                 map.processFastaFile();
                 map.processMapViewFile();
                 Cnv_Hmm cnv = new Cnv_Hmm(parameters);

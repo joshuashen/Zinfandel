@@ -1,0 +1,6 @@
+genome d
+numCNVs 200
+avgCNVSize 400
+depthCov 0.4
+readSize 35
+GridNum 5

@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 public class InitialGridState extends GridState{
     public InitialGridState(String name, int delSize, int gridNumber){
         this.name = name;
