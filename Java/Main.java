@@ -33,7 +33,7 @@ public class Main {
                 }
             }
             if (mapview.exists() && reference.exists() && parameters.exists()){
-                Mapping map = new Mapping(mapview, reference, 15000000);
+                Mapping map = new Mapping(mapview, reference, 10000000);
                 map.processFastaFile();
                 map.processMapViewFile();
                 Cnv_Hmm cnv = new Cnv_Hmm(parameters);
@@ -42,7 +42,7 @@ public class Main {
                 int avg = map.getAverageDistance();
                 int dev = map.getStandardDeviationDistance();
 
-                cnv.createTransitionMatrix();
+                cnv.createTransitionMatrix(avg);
                 cnv.createCoverageMatrix();
                 cnv.createDistanceMatrix(avg, dev);
 

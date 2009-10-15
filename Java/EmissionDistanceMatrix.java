@@ -24,7 +24,7 @@ public class EmissionDistanceMatrix {
 
             for (int i = 5; i<numStates; i++){
                 for (int j = 0; j<maxDistance; j++){
-                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                    if (states.get(i) instanceof InitialGridState){
 			   emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
 //                        emissionDistanceMatrix[i][j] = halfLogNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance)
 //                                                       + halfLogNormal(j, avgDistance, standardDevDistance);
@@ -49,7 +49,7 @@ public class EmissionDistanceMatrix {
 
             for (int i = 3; i<numStates; i++){
                 for (int j = 0; j<maxDistance; j++){
-                    if (states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+                    if (states.get(i) instanceof InitialGridState){
                         emissionDistanceMatrix[i][j] = logNormal(j, ((GridState)states.get(i)).delSize + avgDistance, standardDevDistance);
                     }
                     else{

@@ -1,5 +1,3 @@
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -28,15 +26,15 @@ public class Cnv_Hmm {
     String genome = "d";    //Default genome is Diploid
     int numCNVs = 3000;     //3000 CNVs assumed
     double avgCNVSize = 10000.0;    //Assumed size of CNVs
-    double readSize = 35.0;               //Read Size
+    int readSize = 35;               //Read Size
     double depthCov = 1.0;          //Depth Coverage
     double[] initProb;              //Initial Probabilities for each States
     double chrLength = 3000000000.0;
 //    int maxDeletionSize = 1000;    //Maximum Deletion Size
     int numGridStates;
     double factor = 2;
-    int StatesPerDelSize = 10;
-    double remainbreakpointProb = 0.10;
+    int StatesPerDelSize = 20;
+    double remainbreakpointProb = 0.99;
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
 
     //Default Constructor without Parameter File
@@ -150,9 +148,9 @@ public class Cnv_Hmm {
         System.out.println("States Initialized");
     }
 
-    public void createTransitionMatrix(){
+    public void createTransitionMatrix(int avg){
         TransitionMatrix tm = new TransitionMatrix(states, genome, numCNVs, chrLength, avgCNVSize,
-                                                   remainbreakpointProb, StatesPerDelSize, DelSizes);
+                                                   remainbreakpointProb, StatesPerDelSize, DelSizes, avg, readSize);
         transitionMatrix = tm.transitionMatrix;
     }
 
@@ -191,9 +189,6 @@ public class Cnv_Hmm {
                     }
                     else if (parameterName.equalsIgnoreCase("readSize")){
                         readSize = Integer.valueOf(parameterData);
-                    }
-                    else if (parameterName.equalsIgnoreCase("GridNum")){
-                        StatesPerDelSize = Integer.valueOf(parameterData);
                     }
                 }
            System.out.println("Parameter File Processed");
@@ -448,7 +443,6 @@ public class Cnv_Hmm {
                 }
             }
             if (!GridCNV){
-            //if (cnv[2] != 4){
                 System.out.printf("\t%10d", cnv[0] + 1);  //Increment by 1 to get correct start location
                 System.out.printf("\t%10d", cnv[1] + 1);  //Increment by 1 to get correct end location
                 System.out.printf("\t%10d", cnv[1] - cnv[0]);   //Length of CNV
