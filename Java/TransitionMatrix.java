@@ -5,10 +5,10 @@ public class TransitionMatrix {
     double[][] transitionMatrix;
     ArrayList<State> states;
     /*
-    Necessary Parameters: States, number of CNVs, genome(haploid/diploid), chromosome length, average CNV Size,
-                          probability of remaining in breakpoint state, number of grid states per deletion size
-                          deletion sizes
-    */
+Necessary Parameters: States, number of CNVs, genome(haploid/diploid), chromosome length, average CNV Size,
+probability of remaining in breakpoint state, number of grid states per deletion size
+deletion sizes
+*/
     public TransitionMatrix(ArrayList<State> states, String genome, int numCNVs, double chrLength, double avgCNVSize,
                            double remainbreakpointProb, int StatesPerDelSize, ArrayList<Integer> DelSizes, int avgDistance, int readSize){
         this.states = states;
@@ -47,16 +47,16 @@ public class TransitionMatrix {
                     }
                     //Probability of remaining in breakpoint state
                     /*
-                    else if (states.get(i) instanceof BreakpointState){
-                        transitionMatrix[i][j] = Math.log(remainbreakpointProb);
-                    }
-                    */
+else if (states.get(i) instanceof BreakpointState){
+transitionMatrix[i][j] = Math.log(remainbreakpointProb);
+}
+*/
                     //Pr(Transition from grid state to itself)
-                    else if(states.get(i) instanceof InitialGridState || states.get(i) instanceof FinalGridState){
+else if(states.get(i) instanceof FiveFlankingState || states.get(i) instanceof ThreeFlankingState){
                         int max = avgDistance - 2*readSize;
                         int min = readSize;
                         transitionMatrix[i][j] = Math.log(1 - ((double)StatesPerDelSize/((max + min)/2.0)));
-                    }
+}
                     else if (states.get(i) instanceof GridState){
                         transitionMatrix[i][j] = Math.log(1 - ((double)StatesPerDelSize/((GridState)states.get(i)).delSize));
                     }
@@ -65,7 +65,7 @@ public class TransitionMatrix {
                 else{
                     //Normal -> Initial Grid States/Del1/Del2/Dup1/Dup2
                     if (states.get(i) instanceof normalState &&
-                       (states.get(j) instanceof InitialGridState || states.get(j) instanceof Deletion1State || 
+                       (states.get(j) instanceof FiveFlankingState || states.get(j) instanceof Deletion1State ||
                         states.get(j) instanceof Duplication1State || states.get(j) instanceof Deletion2State ||
                         states.get(j) instanceof Duplication2State)){
                         //Assumed equal probability of transition from normal to del1, dup1, each initial grid state
@@ -75,40 +75,42 @@ public class TransitionMatrix {
                     else if ((states.get(i) instanceof Deletion1State || states.get(i) instanceof Duplication1State ||
                               states.get(i) instanceof Deletion2State || states.get(i) instanceof Duplication2State)
                              && (!(states.get(j) instanceof GridState))){
-                        //Assumed equal probability of transition from del1/dup1 to normal/del1/dup1 
+                        //Assumed equal probability of transition from del1/dup1 to normal/del1/dup1
                         transitionMatrix[i][j] = Math.log((1.0/avgCNVSize)/(numNonGridStates));
                     }
                     //Final Grid States -> Normal(Exiting Grid States back to Normal )
-                    else if(states.get(i) instanceof FinalGridState && states.get(j) instanceof normalState){
+                    else if(states.get(i) instanceof ThreeFlankingState && states.get(j) instanceof normalState){
                         //Prob = number of grid states/deletion size
-                        int max = avgDistance - 2*readSize;
+// transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((ThreeFlankingState)states.get(i)).delSize);
+int max = avgDistance - 2*readSize;
                         int min = readSize;
-                        transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((max + min)/2.0));
+transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((max + min)/2.0));
                     }
                     /*
-                    else if(states.get(i).isBreakpoint){
-                        //Equal probability of transition to Normal/Del1/Dup1
-                        if (genome.equalsIgnoreCase("h")){
-                            transitionMatrix[i][j] = (1-remainbreakpointProb)/3.0;
-                        }
-                        //Equal probability of transition to Normal/Del1/Dup1/Del2/Dup2
-                        else if(genome.equalsIgnoreCase("d")){
-                            transitionMatrix[i][j] = (1-remainbreakpointProb)/5.0;
-                        }
-                    }
-                    */                             
-                    //Probability of transitioning to next grid state   
+else if(states.get(i).isBreakpoint){
+//Equal probability of transition to Normal/Del1/Dup1
+if (genome.equalsIgnoreCase("h")){
+transitionMatrix[i][j] = (1-remainbreakpointProb)/3.0;
+}
+//Equal probability of transition to Normal/Del1/Dup1/Del2/Dup2
+else if(genome.equalsIgnoreCase("d")){
+transitionMatrix[i][j] = (1-remainbreakpointProb)/5.0;
+}
+}
+*/
+                    //Probability of transitioning to next grid state
                     else if(states.get(i) instanceof GridState && states.get(j) instanceof GridState){
                         if (((GridState)states.get(i)).delSize == ((GridState)states.get(j)).delSize){
                             if (((GridState)states.get(i)).gridNumber + 1 == ((GridState)states.get(j)).gridNumber){
-                                if ((GridState)states.get(i) instanceof InitialGridState){
-                                    int max = avgDistance - 2*readSize;
-                                    int min = readSize;
-                                    transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((max + min)/2.0));                                    
-                                }
+// transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((GridState)states.get(i)).delSize);
+if ((GridState)states.get(i) instanceof FiveFlankingState){
+int max = avgDistance - 2*readSize;
+int min = readSize;
+transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((max + min)/2.0));
+}
                                 else{
-                                    transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((GridState)states.get(i)).delSize);
-                                }
+transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((GridState)states.get(i)).delSize);
+}
                             }
                         }
                     }
