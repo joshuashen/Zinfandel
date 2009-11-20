@@ -24,7 +24,8 @@ public class Cnv_Hmm {
     //Default Values: Potentially overidden by parameter file
     int maxCoverage = 75; //Maximum emission, if larger, emission is set to 100
     int maxDistance = 2000; //Maximum paired distance, if larger, set to 1000
-
+    int minDistance = 150;
+    int interval = 100;
     double minEmissionfromDistance = -200.0; // cap of (log of) min emission prob from distance at e^minEmissionfromDistance
     double backgroundDistancePenalty = -4.5; // from log mean (dnorm(x, 0,21)). where x is random numbers of N(0, 21)
     // for SOLiD pairs, it should be N(0,200), which gives backgroundDistancePenalty ~ -6.6
@@ -39,26 +40,17 @@ public class Cnv_Hmm {
     double chrLength = 3000000000.0;
 // int maxDeletionSize = 1000; //Maximum Deletion Size
     int numGridStates;
-    double factor = 2;
     int StatesPerDelSize = 20;
     double remainbreakpointProb = 0.99;
     ArrayList<Integer> DelSizes = new ArrayList<Integer>();
     int maxDisPerPos = 5;
 
-    //Default Constructor without Parameter File
-    public Cnv_Hmm(){
-        initializeGridParams();
-        avgCov = depthCov / readSize; //Set average coverage
-        //Initialize States
-        if (genome.equalsIgnoreCase("h")){
-            initializeHaploidStates();
-        }
-        else{
-            initializeDiploidStates();
-        }
-    }
+
     //Parameter File Provided
-    public Cnv_Hmm(File params, double d, double s){
+    public Cnv_Hmm(File params, double d, double s, int max, int min, int interval){
+        maxDistance = max;
+        minDistance = min;
+        this.interval = interval;
         initializeGridParams();
         readParameterFile(params);
         depthCov = d;
@@ -73,29 +65,21 @@ public class Cnv_Hmm {
         }
     }
 
-    public void setMaxDistance(int d) {
-maxDistance = d;
-    }
-    
-    public void setMaxDisPerPos(int m){
-        maxDisPerPos = m;
-    }
-
     public void setbackgroundDistancePenalty(double p) {
 backgroundDistancePenalty = p;
 
     }
 
-
     // !!!!! need two changes: (1) set the lower and upper limit from outside (2) make it increase linearly instead of exponentially.
     private void initializeGridParams(){
         //Initialize Grid States Parameters- number of Grid States, deletion sizes
         int count = 0;
-        double value = 100;
-        DelSizes.add((int)value);
-        while(value <= maxDistance){
-            value = value * factor;
-            DelSizes.add((int)value);
+        int value = minDistance;
+        DelSizes.add(value);
+        count++;
+        while(value < maxDistance){
+            value = value + interval;
+            DelSizes.add(value);
             count++;
         }
         numGridStates = count;
@@ -134,6 +118,10 @@ backgroundDistancePenalty = p;
             initProb[i] = Math.log(1.0/numStates);
         }
         System.out.println("States Initialized");
+    }
+
+    public void setMaxDisPerDos(int max){
+        maxDisPerPos = max;
     }
 
     private void initializeDiploidStates(){
@@ -292,7 +280,7 @@ backgroundDistancePenalty = p;
     }
 
     //Viterbi Algorithm for Optimal Path
-    public void runViterbiAlgorithm(Chromosome chr, String name){
+    public void runViterbiAlgorithm(Chromosome chr, String name, int lowerBound){
         int chrSize = chr.size; //Chromosome length
         int numStates = states.size(); //Number of States
         double[] delta;
@@ -431,8 +419,8 @@ System.out.println("BP");
                                 int [] FinalGridCNV = cnvs.get(i - (StatesPerDelSize-1));
                                 int startLoc = cnv[0];
                                 int endLoc = FinalGridCNV[1];
-                                System.out.printf("\t%10d", startLoc + 1); //Increment by 1 to get correct start location
-                                System.out.printf("\t%10d", endLoc + 1); //Increment by 1 to get correct end location
+                                System.out.printf("\t%10d", startLoc + 1 + lowerBound); //Increment by 1 to get correct start location
+                                System.out.printf("\t%10d", endLoc + 1 + lowerBound); //Increment by 1 to get correct end location
                                 System.out.printf("\t%10d", endLoc - startLoc); //Length of CNV
                                 System.out.print("\t");
                                 //System.out.print(deltaValues[startLoc] - deltaValues[endLoc]); //delta S
@@ -497,8 +485,8 @@ i = i - (StatesPerDelSize-1);
             }
  if (!GridCNV){
             //if (cnv[2] != 4){
-                System.out.printf("\t%10d", cnv[0] + 1); //Increment by 1 to get correct start location
-                System.out.printf("\t%10d", cnv[1] + 1); //Increment by 1 to get correct end location
+                System.out.printf("\t%10d", cnv[0] + 1 + lowerBound); //Increment by 1 to get correct start location
+                System.out.printf("\t%10d", cnv[1] + 1 + lowerBound); //Increment by 1 to get correct end location
                 System.out.printf("\t%10d", cnv[1] - cnv[0]); //Length of CNV
                 System.out.print("\t");
                 //System.out.print(deltaValues[cnv[0]] - deltaValues[cnv[1]]); //delta S

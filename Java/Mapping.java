@@ -20,10 +20,12 @@ public class Mapping {
     int maxDistance;
     int pairMappingQualCutOff;
     int maxDisPerPos;
+    int lowerBound;
+    int upperBound;
     // int minDelta; // minimum delta between avg and
 
     //Initialize Files and new Chromosomes ArrayList
-    public Mapping(File mv, File ref, int maxD, int cutoff, int limit, int maxDisPerPos){
+    public Mapping(File mv, File ref, int maxD, int cutoff, int limit, int maxDisPerPos, int lower, int upper){
         mapview = mv;
         reference = ref;
         this.limit = limit;
@@ -31,6 +33,8 @@ public class Mapping {
         maxDistance = maxD;
         pairMappingQualCutOff = cutoff;
         this.maxDisPerPos = maxDisPerPos;
+        lowerBound = lower;
+        upperBound = upper;
     }
 
     public int getAverageDistance(){
@@ -67,6 +71,8 @@ public class Mapping {
                    seqLength += line.length();
                }
            }
+           //BOUNDS
+           seqLength = upperBound - lowerBound + 1;
 // chromosomes.put(name, new Chromosome(name, limit)); //Add Final Chromosome
            chromosomes.put(name, new Chromosome(name, seqLength, maxDisPerPos)); //Add Final Chromosome
            System.out.println(seqLength);
@@ -111,12 +117,11 @@ int start = Integer.valueOf(cols[2]);
                     mappingQual = Integer.valueOf(cols[7]); // single read mapping quality, which is a good indicator of repetitiveness
 
 readSize = Integer.valueOf(cols[13]);
-                    if (start < limit){
+                    if (start < upperBound && start >= lowerBound){
+                        //RESET start position
+                        start = start - lowerBound;
                         chromosomes.get(ref).incrementCoverage(start);
-                    }
-else {
-break;
-}
+                    
 
 // !!!! incomplete: should deal with negative distance caused by insertions or tandem duplications
 // if (distance >= 0 && distance <= maxDistance){
@@ -158,6 +163,7 @@ startPos.remove(readString);
 // else{
 // negativeBuffer.add(readString);
                         // }
+                    }
                     }
                     //int flag = Integer.valueOf(st.nextToken());
                     //chromosomes.get(ref).setFlag(start, flag);
