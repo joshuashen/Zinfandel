@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -22,6 +22,7 @@ public class Mapping {
     int maxDisPerPos;
     int lowerBound;
     int upperBound;
+    int chromosomeSize;
     // int minDelta; // minimum delta between avg and
 
     //Initialize Files and new Chromosomes ArrayList
@@ -43,6 +44,10 @@ public class Mapping {
 
     public int getStandardDeviationDistance(){
         return standardDevDistance;
+    }
+
+    public int getChrSize(){
+        return chromosomeSize;
     }
 
     //Process Chromosomes from the reference file
@@ -71,6 +76,7 @@ public class Mapping {
                    seqLength += line.length();
                }
            }
+           chromosomeSize = seqLength;
            //BOUNDS
            seqLength = upperBound - lowerBound + 1;
 // chromosomes.put(name, new Chromosome(name, limit)); //Add Final Chromosome

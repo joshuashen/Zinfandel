@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -98,14 +98,16 @@ backgroundDistancePenalty = p;
                 //Initial Grid State
                 if (j == 0){
                     states.add(new FiveFlankingState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                    states.add(new HomozygousInitialState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
                 }
                 //Final Grid State
                 else if(j == StatesPerDelSize-1){
                     states.add(new ThreeFlankingState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                    states.add(new HomozygousFinalState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
                 }
                 //Middle Grid States
                 else{
-                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
+                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));                    
                 }
             }
         }

@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -17,8 +17,8 @@ int maxDisPerPos = 5;
 int maxGridDistance = 2000;
 int minGridDistance = 150;
 int interval = 100;
-int lowerBound = 0;
-int upperBound = 1000000;
+int gapSize = 10000000;
+int overlap = 1000000;
 
         //Given defaults: will be overidden by args
         File mapview = new File("default");
@@ -81,15 +81,18 @@ else if(args[i].equalsIgnoreCase("-mdpp")) {
 maxDisPerPos = Integer.valueOf(args[i+1]);
 i++;
 }
-else if(args[i].equalsIgnoreCase("-l")) {
-lowerBound = Integer.valueOf(args[i+1]);
+else if(args[i].equalsIgnoreCase("-g")) {
+gapSize = Integer.valueOf(args[i+1]);
 i++;
 }
-else if(args[i].equalsIgnoreCase("-u")) {
-upperBound = Integer.valueOf(args[i+1]);
+else if(args[i].equalsIgnoreCase("-o")) {
+overlap = Integer.valueOf(args[i+1]);
 i++;
 }
             }
+
+            int lowerBound = 0;
+            int upperBound = lowerBound + gapSize;
 
             if (mapview.exists() && reference.exists() && parameters.exists()){
                 Mapping map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
@@ -108,10 +111,20 @@ i++;
                 cnv.setMaxDisPerDos(maxDisPerPos);
 
                 ArrayList<String> keys = map.chromosomeNames;
-
                 for (int i = 0; i<keys.size(); i++){
                     cnv.runViterbiAlgorithm(map.chromosomes.get(keys.get(i)), keys.get(i), lowerBound);
                 }
+
+                int chrSize = map.getChrSize();
+                while (lowerBound<chrSize){
+                    map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound+gapSize-overlap, upperBound+gapSize-overlap);
+                    map.processFastaFile();
+                    map.processMapViewFile();
+                    for (int i = 0; i<keys.size(); i++){
+                        cnv.runViterbiAlgorithm(map.chromosomes.get(keys.get(i)), keys.get(i), lowerBound+gapSize-overlap);
+                    }
+                }
+
             }
             else{
                 System.out.println("Invalid Arguments");

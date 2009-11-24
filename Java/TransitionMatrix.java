@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.util.ArrayList;
 
 public class TransitionMatrix {
@@ -52,7 +52,8 @@ transitionMatrix[i][j] = Math.log(remainbreakpointProb);
 }
 */
                     //Pr(Transition from grid state to itself)
-else if(states.get(i) instanceof FiveFlankingState || states.get(i) instanceof ThreeFlankingState){
+else if(states.get(i) instanceof FiveFlankingState || states.get(i) instanceof ThreeFlankingState ||
+states.get(i) instanceof HomozygousInitialState || states.get(i) instanceof HomozygousFinalState){
                         int max = avgDistance - 2*readSize;
                         int min = readSize;
                         transitionMatrix[i][j] = Math.log(1 - ((double)StatesPerDelSize/((max + min)/2.0)));
@@ -66,6 +67,7 @@ else if(states.get(i) instanceof FiveFlankingState || states.get(i) instanceof T
                     //Normal -> Initial Grid States/Del1/Del2/Dup1/Dup2
                     if (states.get(i) instanceof normalState &&
                        (states.get(j) instanceof FiveFlankingState || states.get(j) instanceof Deletion1State ||
+                        states.get(j) instanceof HomozygousInitialState ||
                         states.get(j) instanceof Duplication1State || states.get(j) instanceof Deletion2State ||
                         states.get(j) instanceof Duplication2State)){
                         //Assumed equal probability of transition from normal to del1, dup1, each initial grid state
@@ -79,7 +81,7 @@ else if(states.get(i) instanceof FiveFlankingState || states.get(i) instanceof T
                         transitionMatrix[i][j] = Math.log((1.0/avgCNVSize)/(numNonGridStates));
                     }
                     //Final Grid States -> Normal(Exiting Grid States back to Normal )
-                    else if(states.get(i) instanceof ThreeFlankingState && states.get(j) instanceof normalState){
+                    else if((states.get(i) instanceof ThreeFlankingState || states.get(i) instanceof HomozygousFinalState) && states.get(j) instanceof normalState){
                         //Prob = number of grid states/deletion size
 // transitionMatrix[i][j] = Math.log((double)StatesPerDelSize/((ThreeFlankingState)states.get(i)).delSize);
 int max = avgDistance - 2*readSize;

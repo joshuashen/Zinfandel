@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 public class Transition {
     State startState;
     State endState;

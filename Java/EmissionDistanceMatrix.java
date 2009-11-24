@@ -1,4 +1,4 @@
-
+package cnv_hmm;
 import java.util.ArrayList;
 
 public class EmissionDistanceMatrix {
@@ -23,7 +23,6 @@ if (states.get(state) instanceof FiveFlankingState) {
 emissionDistanceMatrixPosStrand[state][dist] = logBimodal(dist, avgDistance, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 //emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
-
 }
 
 // final grid state: negative strand distance is larger; positive strand avg
@@ -31,6 +30,16 @@ else if (states.get(state) instanceof ThreeFlankingState) {
 emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
 //emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 emissionDistanceMatrixNegStrand[state][dist] = logBimodal(dist, avgDistance, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
+}
+else if (states.get(state) instanceof HomozygousInitialState) {
+emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
+//emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
+emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
+}
+else if (states.get(state) instanceof HomozygousFinalState) {
+emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
+//emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
+emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist,((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 }
 else {
 emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
