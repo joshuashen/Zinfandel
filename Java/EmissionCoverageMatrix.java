@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.util.ArrayList;
 
 //Create Emission Matrix
@@ -39,11 +39,10 @@ public class EmissionCoverageMatrix {
 
             for (int i = 5; i<numStates; i++){
                 for (int j = 0; j<maxCoverage; j++){
-                    if (states.get(i) instanceof FiveFlankingState || states.get(i) instanceof ThreeFlankingState ||
-                        states.get(i) instanceof HomozygousInitialState || states.get(i) instanceof HomozygousFinalState){
+                    if (states.get(i) instanceof FiveFlankingState || states.get(i) instanceof ThreeFlankingState){
                         emissionCoverageMatrix[i][j] = logPoisson(j, lambda);
                     }
-                    else if (states.get(i) instanceof GridState){
+                    else{
                         emissionCoverageMatrix[i][j] = logPoisson(j, del1);
                     }
                 }

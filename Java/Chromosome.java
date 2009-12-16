@@ -1,33 +1,27 @@
-package cnv_hmm;
+
+import java.util.LinkedList;
+
 public class Chromosome {
     String name; //Chromosome Name
     int size; //Seqence Length of the Chromosome
-    int maxDisPerPosition;
+
     byte[] coverage; //Depth-Coverage: Number of reads that begin at the Base-Pair
-    int[][] distances; //Paired Ends Distance
-
-
+    LinkedList<Integer>[] distances; //Paired Ends Distance
 
     int[] flags; //flags(used for explicit breakpoint modelling)
     int insertSize; //Ignored for now
 
 
-    public Chromosome(String n, int s, int d){
+    public Chromosome(String n, int s){
         name = n;
         size = s;
-        maxDisPerPosition = d;
+
         coverage = new byte[size];
-        distances = new int[size][maxDisPerPosition];
-
-
-        //flags = new int[size];
-
-        //initialize all distance to -1, signifies no read at this position i if distance[i] remains -1
-        for (int i = 0; i<size; i++){
-            for (int j = 0; j<maxDisPerPosition; j++){
-                distances[i][j] = 0;
-            }
+        distances = new LinkedList[size];
+        for (int i=0; i<size; i++){
+            distances[i] = new LinkedList<Integer>();
         }
+        //flags = new int[size];
     }
 
     //Increments the depth coverage for the base-pair position
@@ -44,13 +38,7 @@ return;
         if (pos > size -1 || pos < 0) {
             return;
         }
-        //If number of reads at position exceeds maximum set, then read distance is ignored
-        for (int i=0; i<maxDisPerPosition; i++){
-            if (distances[pos-1][i] == 0){
-                distances[pos-1][i] = distance;
-                break;
-            }
-        }
+        distances[pos-1].add(distance);
     }
 /*
 //Sets flag for base-pair position

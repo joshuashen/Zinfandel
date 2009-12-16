@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -6,7 +6,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String usage = "USAGE: java Main -r ref.fa -m mapview -p param -c coverage [-s avgCNVSize] [ -d maxDistance] [ -d minDistance] [-q qualCutoff] [-h head] [-b backgroundDistancePenalty]";
+        String usage = "USAGE: java Main -r ref.fa -m mapview -p param -c coverage [-s avgCNVSize] [ -d maxDistance] [ -d2 minDistance] [ -dMax maxSolid] [-q qualCutoff] [-h head] [-b backgroundDistancePenalty]";
 
 int head4debug = 300000000;
 int qualCutoff = 1;
@@ -16,6 +16,7 @@ double backgroundDistancePenalty = -4.5;
 int maxDisPerPos = 5;
 int maxGridDistance = 2000;
 int minGridDistance = 150;
+int factor = 2;	//TEMPORARY
 int interval = 100;
 int gapSize = 10000000;
 int overlap = 1000000;
@@ -95,10 +96,11 @@ i++;
             int upperBound = lowerBound + gapSize;
 
             if (mapview.exists() && reference.exists() && parameters.exists()){
+                System.out.println(lowerBound + "," + upperBound);
                 Mapping map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
                 map.processFastaFile();
                 map.processMapViewFile();
-                Cnv_Hmm cnv = new Cnv_Hmm(parameters, depthCov, avgCNVSize, maxGridDistance, minGridDistance, interval);
+                Cnv_Hmm cnv = new Cnv_Hmm(parameters, depthCov, avgCNVSize, maxGridDistance, minGridDistance, factor);
                 //cnv.printTransitionMatrix();
 
                 int avg = map.getAverageDistance();
@@ -109,21 +111,31 @@ i++;
                 cnv.createCoverageMatrix();
                 cnv.createDistanceMatrix(avg, dev);
                 cnv.setMaxDisPerDos(maxDisPerPos);
-
+             
                 ArrayList<String> keys = map.chromosomeNames;
                 for (int i = 0; i<keys.size(); i++){
                     cnv.runViterbiAlgorithm(map.chromosomes.get(keys.get(i)), keys.get(i), lowerBound);
                 }
-
+                lowerBound = lowerBound - overlap;
                 int chrSize = map.getChrSize();
-                while (lowerBound<chrSize){
-                    map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound+gapSize-overlap, upperBound+gapSize-overlap);
+		  boolean finished = false;
+           while (lowerBound<chrSize && !finished){
+		      lowerBound = lowerBound + gapSize;
+		      if (upperBound + gapSize > chrSize){
+		          upperBound = chrSize;
+			   finished = true;
+		      }
+		      else{
+		      	   upperBound = upperBound + gapSize;
+		      }
+                    System.out.println(lowerBound + "," + upperBound);
+                    map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
                     map.processFastaFile();
                     map.processMapViewFile();
                     for (int i = 0; i<keys.size(); i++){
-                        cnv.runViterbiAlgorithm(map.chromosomes.get(keys.get(i)), keys.get(i), lowerBound+gapSize-overlap);
+                        cnv.runViterbiAlgorithm(map.chromosomes.get(keys.get(i)), keys.get(i), lowerBound);
                     }
-                }
+            }
 
             }
             else{

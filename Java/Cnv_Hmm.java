@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.BufferedWriter;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.math.BigDecimal;
 
 public class Cnv_Hmm {
@@ -25,7 +26,7 @@ public class Cnv_Hmm {
     int maxCoverage = 75; //Maximum emission, if larger, emission is set to 100
     int maxDistance = 2000; //Maximum paired distance, if larger, set to 1000
     int minDistance = 150;
-    int interval = 100;
+    int factor = 2;
     double minEmissionfromDistance = -200.0; // cap of (log of) min emission prob from distance at e^minEmissionfromDistance
     double backgroundDistancePenalty = -4.5; // from log mean (dnorm(x, 0,21)). where x is random numbers of N(0, 21)
     // for SOLiD pairs, it should be N(0,200), which gives backgroundDistancePenalty ~ -6.6
@@ -47,10 +48,10 @@ public class Cnv_Hmm {
 
 
     //Parameter File Provided
-    public Cnv_Hmm(File params, double d, double s, int max, int min, int interval){
+    public Cnv_Hmm(File params, double d, double s, int max, int min, int factor){
         maxDistance = max;
         minDistance = min;
-        this.interval = interval;
+        this.factor = factor;
         initializeGridParams();
         readParameterFile(params);
         depthCov = d;
@@ -69,7 +70,7 @@ public class Cnv_Hmm {
 backgroundDistancePenalty = p;
 
     }
-
+/*
     // !!!!! need two changes: (1) set the lower and upper limit from outside (2) make it increase linearly instead of exponentially.
     private void initializeGridParams(){
         //Initialize Grid States Parameters- number of Grid States, deletion sizes
@@ -80,6 +81,19 @@ backgroundDistancePenalty = p;
         while(value < maxDistance){
             value = value + interval;
             DelSizes.add(value);
+            count++;
+        }
+        numGridStates = count;
+    }
+*/
+    private void initializeGridParams(){
+        //Initialize Grid States Parameters- number of Grid States, deletion sizes
+        int count = 0;
+        double value = 100;
+        DelSizes.add((int)value);
+        while(value <= maxDistance){
+            value = value * factor;
+            DelSizes.add((int)value);
             count++;
         }
         numGridStates = count;
@@ -98,16 +112,14 @@ backgroundDistancePenalty = p;
                 //Initial Grid State
                 if (j == 0){
                     states.add(new FiveFlankingState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
-                    states.add(new HomozygousInitialState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
                 }
                 //Final Grid State
                 else if(j == StatesPerDelSize-1){
                     states.add(new ThreeFlankingState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
-                    states.add(new HomozygousFinalState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
                 }
                 //Middle Grid States
                 else{
-                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));                    
+                    states.add(new GridState("delSize" + DelSizes.get(i).toString() + "-" + j, DelSizes.get(i), j));
                 }
             }
         }
@@ -250,32 +262,33 @@ backgroundDistancePenalty = p;
     }
 
     //Accessor for Emission Matrix
-    public double Emission(byte state, byte cov, int[] distance){
+    public double Emission(byte state, byte cov, LinkedList<Integer> distance){
         if (cov > maxCoverage){
             cov = (byte) maxCoverage;
         }
         // if (Math.abs(distance) > maxDistance){
         // distance = signum(distance) * maxDistance;
-        for (int i=0; i<maxDisPerPos; i++){
-            if (distance[i] > maxDistance) {
-            distance[i] = maxDistance;
-            } else if (distance[i] < (-1*maxDistance) ) {
-            distance[i] = -1 *maxDistance;
+        for (int i=0; i<distance.size(); i++){
+            if (distance.get(i) > maxDistance) {
+            distance.set(i, maxDistance);
+            } else if (distance.get(i) < (-1*maxDistance) ) {
+            distance.set(i, -1 * maxDistance);
             }
         }
 
                 //A + strand read starts at this position
 
         double totalDistanceEmission = 0;
-        for (int i=0; i<maxDisPerPos; i++){
-            if (distance[i] > 0){
-                totalDistanceEmission = totalDistanceEmission + emissionDistanceMatrixPosStrand[state][distance[i]] + backgroundDistancePenalty;
+        for (int i=0; i<distance.size(); i++){
+            if (distance.get(i) > 0){
+                totalDistanceEmission = totalDistanceEmission + emissionDistanceMatrixPosStrand[state][distance.get(i)] + backgroundDistancePenalty;
             }
-            else if (distance[i] < 0){
-                totalDistanceEmission = totalDistanceEmission + emissionDistanceMatrixNegStrand[state][Math.abs(distance[i])] + backgroundDistancePenalty;
+            else if (distance.get(i) < 0){
+                totalDistanceEmission = totalDistanceEmission + emissionDistanceMatrixNegStrand[state][Math.abs(distance.get(i))] + backgroundDistancePenalty;
             }
             else{
                 totalDistanceEmission = totalDistanceEmission + backgroundDistancePenalty * 2;
+		        break;
             }
         }
         return emissionCoverageMatrix[state][cov] + totalDistanceEmission;

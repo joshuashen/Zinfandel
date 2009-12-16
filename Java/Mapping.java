@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 //import java.util.regex.*;
 
 public class Mapping {
@@ -66,7 +67,7 @@ public class Mapping {
            }
            while ((line = in.readLine()) != null && seqLength < limit){
                if (line.startsWith(">")){ //Start of new Chromosome
-                   chromosomes.put(name, new Chromosome(name, seqLength, maxDisPerPos)); //Add Chromosome to HashTable
+                   chromosomes.put(name, new Chromosome(name, seqLength)); //Add Chromosome to HashTable
                    chromosomeNames.add(name);
                    StringTokenizer st = new StringTokenizer(line.substring(1), " ");
                    name = st.nextToken();
@@ -80,7 +81,7 @@ public class Mapping {
            //BOUNDS
            seqLength = upperBound - lowerBound + 1;
 // chromosomes.put(name, new Chromosome(name, limit)); //Add Final Chromosome
-           chromosomes.put(name, new Chromosome(name, seqLength, maxDisPerPos)); //Add Final Chromosome
+           chromosomes.put(name, new Chromosome(name, seqLength)); //Add Final Chromosome
            System.out.println(seqLength);
            chromosomeNames.add(name);
            System.out.println("Reference Chromosomes Loaded.");
@@ -123,9 +124,9 @@ int start = Integer.valueOf(cols[2]);
                     mappingQual = Integer.valueOf(cols[7]); // single read mapping quality, which is a good indicator of repetitiveness
 
 readSize = Integer.valueOf(cols[13]);
-                    if (start < upperBound && start >= lowerBound){
-                        //RESET start position
-                        start = start - lowerBound;
+                    if (start < upperBound && start > lowerBound){
+                        //RESET start position			   
+                        start = start - lowerBound;				
                         chromosomes.get(ref).incrementCoverage(start);
                     
 
@@ -179,16 +180,15 @@ startPos.remove(readString);
                 averageDistance = (int) avgDistance;
                 System.out.println(avgDistance + "\t" + averageDistance);
                 Chromosome c = chromosomes.get(ref);
-                int[][] distances = c.distances;
+                LinkedList<Integer>[] distances = c.distances;
                 long sum = 0;
                 int num = 0;
                 for (int i = 0; i<distances.length; i++){
-                    for (int j =0; j<maxDisPerPos; j++)
-                    if (distances[i][j] != 0){
-                        sum += ((Math.abs(Math.abs(distances[i][j]) - averageDistance)) *
-                               (Math.abs(Math.abs(distances[i][j]) - averageDistance)));
+                    for (int j = 0; j<distances[i].size(); j++){                        
+                        sum += ((Math.abs(Math.abs(distances[i].get(j)) - averageDistance)) *
+                               (Math.abs(Math.abs(distances[i].get(j)) - averageDistance)));
                         num++;
-                    }
+                    }                    
                 }
                 double Dev = Math.sqrt((double) Math.abs(sum)/num);
                 standardDevDistance = (int) Dev;
@@ -204,4 +204,5 @@ startPos.clear();
       }
     }
 }
+
 

@@ -1,4 +1,4 @@
-package cnv_hmm;
+
 import java.util.ArrayList;
 
 public class EmissionDistanceMatrix {
@@ -23,6 +23,7 @@ if (states.get(state) instanceof FiveFlankingState) {
 emissionDistanceMatrixPosStrand[state][dist] = logBimodal(dist, avgDistance, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 //emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
+
 }
 
 // final grid state: negative strand distance is larger; positive strand avg
@@ -30,16 +31,6 @@ else if (states.get(state) instanceof ThreeFlankingState) {
 emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
 //emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 emissionDistanceMatrixNegStrand[state][dist] = logBimodal(dist, avgDistance, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
-}
-else if (states.get(state) instanceof HomozygousInitialState) {
-emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
-//emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
-emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
-}
-else if (states.get(state) instanceof HomozygousFinalState) {
-emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
-//emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, ((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
-emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist,((GridState)states.get(state)).delSize + avgDistance, standardDevDistance);
 }
 else {
 emissionDistanceMatrixPosStrand[state][dist] = logNormal(dist, avgDistance, standardDevDistance);
@@ -68,7 +59,7 @@ emissionDistanceMatrixNegStrand[state][dist] = logNormal(dist, avgDistance, stan
         double p2 = (-1) * ((double)dis - avg2) * ((double)dis - avg2);
         p1 = p1/(2 * dev * dev);
         p2 = p2/(2 * dev * dev);
-        p1 = Math.exp(1);
+        p1 = Math.exp(p1);
         p2 = Math.exp(p2);
         double x = Math.log(p1 + p2) - Math.log(2 * dev * Math.sqrt(2*Math.PI));
         if (x < this.minEmissionfromDistance) {
