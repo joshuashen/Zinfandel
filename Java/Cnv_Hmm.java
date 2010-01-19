@@ -24,9 +24,11 @@ public class Cnv_Hmm {
 
     //Default Values: Potentially overidden by parameter file
     int maxCoverage = 75; //Maximum emission, if larger, emission is set to 100
-    int maxDistance = 2000; //Maximum paired distance, if larger, set to 1000
+    int maxDistance = 10000; //Maximum paired distance, if larger, set to 1000
+    int maxGridDistance = 2000;
     int minDistance = 150;
     int factor = 2;
+    int interval = 100;
     double minEmissionfromDistance = -200.0; // cap of (log of) min emission prob from distance at e^minEmissionfromDistance
     double backgroundDistancePenalty = -4.5; // from log mean (dnorm(x, 0,21)). where x is random numbers of N(0, 21)
     // for SOLiD pairs, it should be N(0,200), which gives backgroundDistancePenalty ~ -6.6
@@ -48,10 +50,11 @@ public class Cnv_Hmm {
 
 
     //Parameter File Provided
-    public Cnv_Hmm(File params, double d, double s, int max, int min, int factor){
+    public Cnv_Hmm(File params, double d, double s, int max, int min, int interv, int maxGrid){
         maxDistance = max;
         minDistance = min;
-        this.factor = factor;
+        maxGridDistance = maxGrid;
+        this.interval = interv;
         initializeGridParams();
         readParameterFile(params);
         depthCov = d;
@@ -70,7 +73,7 @@ public class Cnv_Hmm {
 backgroundDistancePenalty = p;
 
     }
-/*
+
     // !!!!! need two changes: (1) set the lower and upper limit from outside (2) make it increase linearly instead of exponentially.
     private void initializeGridParams(){
         //Initialize Grid States Parameters- number of Grid States, deletion sizes
@@ -78,14 +81,14 @@ backgroundDistancePenalty = p;
         int value = minDistance;
         DelSizes.add(value);
         count++;
-        while(value < maxDistance){
+        while(value < maxGridDistance){
             value = value + interval;
             DelSizes.add(value);
             count++;
         }
         numGridStates = count;
     }
-*/
+/*
     private void initializeGridParams(){
         //Initialize Grid States Parameters- number of Grid States, deletion sizes
         int count = 0;
@@ -98,7 +101,7 @@ backgroundDistancePenalty = p;
         }
         numGridStates = count;
     }
-
+*/
     private void initializeHaploidStates(){
         //Original States
         states.add(new normalState());

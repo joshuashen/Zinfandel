@@ -14,12 +14,13 @@ double depthCov = 2;
 int avgCNVSize = 1000;
 double backgroundDistancePenalty = -4.5;
 int maxDisPerPos = 5;
-int maxGridDistance = 2000;
+int maxDistance = 10000;
 int minGridDistance = 150;
 int factor = 2;	//TEMPORARY
 int interval = 100;
 int gapSize = 10000000;
 int overlap = 1000000;
+int maxGridDistance = 2000;
 
         //Given defaults: will be overidden by args
         File mapview = new File("default");
@@ -46,7 +47,7 @@ if (args.length < 6){
                     i++;
                 }
 else if(args[i].equalsIgnoreCase("-d")) {
-maxGridDistance = Integer.valueOf(args[i+1]);
+maxDistance = Integer.valueOf(args[i+1]);
 i++;
 }
 else if(args[i].equalsIgnoreCase("-d2")) {
@@ -97,10 +98,10 @@ i++;
 
             if (mapview.exists() && reference.exists() && parameters.exists()){
                 System.out.println(lowerBound + "," + upperBound);
-                Mapping map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
+                Mapping map = new Mapping(mapview, reference, maxDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
                 map.processFastaFile();
                 map.processMapViewFile();
-                Cnv_Hmm cnv = new Cnv_Hmm(parameters, depthCov, avgCNVSize, maxGridDistance, minGridDistance, factor);
+                Cnv_Hmm cnv = new Cnv_Hmm(parameters, depthCov, avgCNVSize, maxDistance, minGridDistance, interval, maxGridDistance);
                 //cnv.printTransitionMatrix();
 
                 int avg = map.getAverageDistance();
@@ -129,7 +130,7 @@ i++;
 		      	   upperBound = upperBound + gapSize;
 		      }
                     System.out.println(lowerBound + "," + upperBound);
-                    map = new Mapping(mapview, reference, maxGridDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
+                    map = new Mapping(mapview, reference, maxDistance, qualCutoff, head4debug, maxDisPerPos, lowerBound, upperBound);
                     map.processFastaFile();
                     map.processMapViewFile();
                     for (int i = 0; i<keys.size(); i++){
